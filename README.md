@@ -1,3 +1,7 @@
+
+> [!WARNING]  
+>This project is under heavy development and is not ready for any promised use case yet!
+
 # A library for transparent execution of heavy Python jobs on SLURM!
 
 Imagine being able to offload **any** Python function to a HPC cluster with just few lines of code!
