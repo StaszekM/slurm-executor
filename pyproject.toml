@@ -1,0 +1,21 @@
+[project]
+name = "slurm-executor"
+version = "0.1.0"
+description = "A library for transparent execution of heavy Python jobs on SLURM!"
+readme = "README.md"
+authors = [
+    { name = "Stanisław Markowski", email = "stanislaw.markowski@outlook.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fabric>=3.2.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.23,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.0",
+]

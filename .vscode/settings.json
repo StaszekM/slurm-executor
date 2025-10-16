@@ -1,0 +1,23 @@
+{
+  "ruff.format.backend": "uv",
+  "ruff.organizeImports": true,
+  "ruff.nativeServer": "on",
+  "notebook.formatOnSave.enabled": true,
+  "notebook.codeActionsOnSave": {
+    "notebook.source.fixAll": "explicit",
+    "notebook.source.organizeImports": "explicit"
+  },
+  "editor.codeActionsOnSave": {
+    "source.unusedImports": "never",
+    "source.organizeImports": "never"
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "python.analysis.typeCheckingMode": "basic"
+}
