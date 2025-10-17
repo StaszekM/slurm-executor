@@ -1,0 +1,6 @@
+.git/
+.venv/
+.ruff_cache/
+rsync-exclude.txt
+.env
+.vscode
