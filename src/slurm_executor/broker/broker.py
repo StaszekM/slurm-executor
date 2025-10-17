@@ -50,7 +50,7 @@ def slurm_task(
             print(f"[remote] Syncing to {remote}:{remote_path}")
 
             os.system(
-                f"rsync --delete --progress -az --exclude-from=rsync-exclude.txt ./ {remote}:{remote_path}/"
+                f"rsync --delete --progress -az --exclude-from=rsync-exclude.txt ./ {remote}:{remote_path}/"  # noqa: E501
             )
             os.system(f"rsync {call_file} {remote}:{remote_path}/call.pkl")
 
