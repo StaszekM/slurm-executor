@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from slurm_executor import slurm_task
 
 load_dotenv()
-print(os.getenv("SLURM_USERNAME"))
 
 
 @slurm_task(

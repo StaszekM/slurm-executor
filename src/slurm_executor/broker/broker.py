@@ -39,19 +39,19 @@ def slurm_task(
             )
             executor.serialize_call(func, args, kwargs)
 
-            print(remote, user, port, connect_kwargs)
-
-            with Connection(
-                remote, user=user, port=port, connect_kwargs=connect_kwargs
-            ) as conn:
+            with Connection(remote, user=user, port=port) as conn:
                 # --- rsync codebase to remote ---
                 remote_path = f"{workdir}/{func_name}_{int(libtime.time())}"
-                conn.run(f"mkdir -p {remote_path}")
+                conn.run(f"mkdir -p {remote_path}", pty=False)
                 print(f"[remote] Syncing to {remote}:{remote_path}")
 
-                os.system(
-                    f"rsync --delete --progress -az --exclude-from=rsync-exclude.txt ./ {remote}:{remote_path}/"  # noqa: E501
+                key_path = "~/.ssh/id_ed25519"
+
+                conn.local(
+                    f"rsync -e 'ssh -p {conn.port} -i {key_path}' --delete --info=progress2 -az --exclude-from=rsync-exclude.txt ./ {conn.user}@{conn.host}:{remote_path}/",  # noqa: E501
+                    pty=False,
                 )
+                return
                 os.system(f"rsync {call_file} {remote}:{remote_path}/call.pkl")
 
                 # --- submit job ---
