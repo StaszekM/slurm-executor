@@ -1,8 +1,6 @@
-import inspect
 import os
 import pathlib
 import tempfile
-import textwrap
 import time as libtime
 from typing import Callable, ParamSpec, TypeVar
 
@@ -29,11 +27,6 @@ def slurm_task(
 
             # --- serialize call ---
             func_name = func.__name__
-            func_src = inspect.getsource(func)
-            lines = func_src.splitlines()
-            while lines and lines[0].lstrip().startswith("@"):
-                lines.pop(0)
-            func_src = textwrap.dedent("\n".join(lines))
 
             tmp = tempfile.TemporaryDirectory()
             local_job_dir = pathlib.Path(tmp.name)
@@ -110,6 +103,9 @@ EOF
                     conn.run(f"cat {remote_path}/{job_out_file}", hide=None)
 
                     break
+                elif out.startswith("RUNNING"):
+                    print(f"[remote] Job {job_id} is still running... Cat:")
+                    conn.run(f"cat {remote_path}/{job_out_file}", hide=None)
                 libtime.sleep(5)
             return None
 
