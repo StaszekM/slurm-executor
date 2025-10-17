@@ -17,6 +17,9 @@ def slurm_task(
     time: str = "00:10:00",
     remote: str | None = None,
     workdir: str = "~/remote_jobs",
+    port: int = 22,
+    connect_kwargs: dict | None = None,
+    user: str | None = None,
 ):
     def decorator(func: Callable[P, T]) -> Callable[P, T | None]:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
@@ -36,7 +39,11 @@ def slurm_task(
             )
             executor.serialize_call(func, args, kwargs)
 
-            with Connection(remote) as conn:
+            print(remote, user, port, connect_kwargs)
+
+            with Connection(
+                remote, user=user, port=port, connect_kwargs=connect_kwargs
+            ) as conn:
                 # --- rsync codebase to remote ---
                 remote_path = f"{workdir}/{func_name}_{int(libtime.time())}"
                 conn.run(f"mkdir -p {remote_path}")
