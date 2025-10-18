@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -13,13 +14,12 @@ load_dotenv()
     partition=str(os.getenv("CPU_PARTITION")),
     port=2222,
     user=os.getenv("SLURM_USERNAME"),
-    connect_kwargs={
-        "password": os.getenv("PASSWORD"),
-    },
+    workdir="~/remote_jobs",
 )
 def write_to_standard_output(text: str):
     print(f"Writing to standard output: {text}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     write_to_standard_output("Hello!")

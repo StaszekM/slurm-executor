@@ -1,0 +1,1 @@
+rsync -e 'ssh -p {{port}}' --delete --info=progress2 -az{% if exclusion_file %} --exclude-from={{exclusion_file}}{% endif %} {{source}} {{user}}@{{host}}:{{destination}}

@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --partition={{partition}}
+#SBATCH --time={{time}}
+
+set -e
+cd {{workspace_location}}
+
+source /usr/local/sbin/modules.sh
+
+module load Python/3.12.3-GCCcore-13.3.0
+
+uv sync
+
+export PYTHONPATH={{workspace_location}}:$PYTHONPATH
+
+echo "Running"
+
+uv run - <<'EOF'
+from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
+
+executor = CloudpickleExecutor(
+    serialize_to="call.pkl", deserialize_from="call.pkl"
+)
+executor.run()
+
+EOF
