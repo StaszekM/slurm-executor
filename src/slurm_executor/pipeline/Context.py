@@ -19,6 +19,8 @@ class Context(BaseModel):
     remote_workspace_path: Optional[str] = None
     remote_call_path: Optional[str] = None
     remote_sbatch_path: Optional[str] = None
+    job_output_file_location: Optional[str] = None
+    job_id: Optional[str] = None
 
     def attach_connection(self, conn: fabric.Connection):
         self._connection = conn

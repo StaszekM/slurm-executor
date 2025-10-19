@@ -1,5 +1,4 @@
-from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import cloudpickle
 import jinja2
@@ -19,38 +18,9 @@ def compose_sbatch_script(partition: str, time: str, workspace_location: str) ->
 class CloudpickleExecutor:
     def __init__(
         self,
-        serialize_to: str | Path,
         deserialize_from: str,
-        partition: str,
-        time: str,
-        workspace_location: str,
     ):
-        self.serialize_to = serialize_to
         self.deserialize_from = deserialize_from
-
-        self.partition = partition
-        self.time = time
-        self.workspace_location = workspace_location
-
-    def serialize_call(
-        self, func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]
-    ) -> None:
-        call_data = SerializableCallData(
-            func=func,
-            args=args,
-            kwargs=kwargs,
-        )
-        with open(self.serialize_to, "wb") as f:
-            cloudpickle.dump(call_data, f)  # pyright: ignore[reportUnknownMemberType]
-
-    def serialize_sbatch_script(self, location: Path) -> None:
-        composed_file_contents = compose_sbatch_script(
-            partition=self.partition,
-            time=self.time,
-            workspace_location=self.workspace_location,
-        )
-
-        location.write_text(composed_file_contents)
 
     def run(self) -> Any:
         call_data = self._deserialize_call()

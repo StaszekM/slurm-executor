@@ -5,21 +5,19 @@
 set -e
 cd {{workspace_location}}
 
-source /usr/local/sbin/modules.sh
+if ! command -v /root/.local/bin/uv >/dev/null 2>&1; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
 
-module load Python/3.12.3-GCCcore-13.3.0
-
-uv sync
-
-export PYTHONPATH={{workspace_location}}:$PYTHONPATH
+/root/.local/bin/uv sync
 
 echo "Running"
 
-uv run - <<'EOF'
+/root/.local/bin/uv run - <<'EOF'
 from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
 
 executor = CloudpickleExecutor(
-    serialize_to="call.pkl", deserialize_from={{remote_call_location}}
+    deserialize_from="{{remote_call_location}}"
 )
 executor.run()
 
