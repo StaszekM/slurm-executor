@@ -19,7 +19,7 @@ uv run - <<'EOF'
 from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
 
 executor = CloudpickleExecutor(
-    serialize_to="call.pkl", deserialize_from="call.pkl"
+    serialize_to="call.pkl", deserialize_from={{remote_call_location}}
 )
 executor.run()
 
