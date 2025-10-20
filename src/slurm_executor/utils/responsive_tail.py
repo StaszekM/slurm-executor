@@ -1,6 +1,5 @@
 import os
 import time
-from typing import Any, Callable
 
 import fabric
 

@@ -14,7 +14,6 @@ from paramiko.ssh_exception import SSHException
 
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.pipeline.Context import Context
-from slurm_executor.utils import responsive_tail
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -279,7 +278,7 @@ class WaitForJobCompletion(Step):
         super().__init__()
         self.poll_interval_ms = poll_interval_ms
 
-    def tail_log(self, ctx: Context):
+    def tail_log(self, ctx: Context, tail_process_marker: str):
         connection_config = ctx.connection_config
         remote_host = connection_config.host
         user = connection_config.user
@@ -289,15 +288,13 @@ class WaitForJobCompletion(Step):
 
         tail_conn = Connection(host=remote_host, user=user, port=port)
 
+        cmd = f"bash -c \"exec -a {tail_process_marker} bash -c 'until [ -f {remote_workspace}/{remote_log} ]; do sleep 1; ls > /dev/null; done; tail -n +1 -f {remote_workspace}/{remote_log}'\""
+
         try:
-            responsive_tail.responsive_tail(
-                tail_conn,
-                path=f"{remote_workspace}/{remote_log}",
-                poll_interval=0.5,
-            )
-        except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError) as e:
+            tail_conn.run(cmd)
+        except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError):
             # Normal during remote process kill or connection close
-            print(f"[tail] stopped: {type(e).__name__}")
+            pass
         finally:
             tail_conn.close()
 
@@ -307,8 +304,11 @@ class WaitForJobCompletion(Step):
         assert job_id is not None, (
             f"Job ID must be set in context before executing {type(self).__name__}."
         )
+        tail_process_marker = f"responsive_tail_job_{job_id}"
 
-        t_tail = threading.Thread(target=self.tail_log, args=(ctx,), daemon=True)
+        t_tail = threading.Thread(
+            target=self.tail_log, args=(ctx, tail_process_marker), daemon=True
+        )
         t_tail.start()
 
         prev_state = None
@@ -332,7 +332,7 @@ class WaitForJobCompletion(Step):
                 print(".", end="", flush=True)
             if state in {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"}:
                 # kill only the tail we started by matching the custom argv0
-                # conn.run(f"pkill -f {tail_process_marker}", warn=False)
+                conn.run(f"pkill -f {tail_process_marker}", warn=False)
                 t_tail.join()
 
                 if state != "COMPLETED":
