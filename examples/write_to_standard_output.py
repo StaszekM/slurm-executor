@@ -30,7 +30,9 @@ assert cpu_partition
 pipeline = Pipeline(
     steps=[
         RSyncWorkspaceToRemote(
-            source=".", destination="~/remote_job", exclusion_file="rsync-exclude.txt"
+            source=".",
+            destination=f"/home/{user}/remote_job",
+            exclusion_file="rsync-exclude.txt",
         ),
         SerializeCall(),
         SendCall(),
@@ -39,7 +41,7 @@ pipeline = Pipeline(
             time="00:05:00",
         ),
         SendSbatchScript(),
-        SubmitSbatchScript(output_file_location="job.out"),
+        SubmitSbatchScript(output_file_location=f"/home/{user}/remote_job/job.out"),
         WaitForJobCompletion(poll_interval_ms=1000),
     ],
     connection_config=ConnectionConfig(

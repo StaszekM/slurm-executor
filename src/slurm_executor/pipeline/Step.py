@@ -255,6 +255,7 @@ class SubmitSbatchScript(Step):
         assert remote_sbatch_path is not None, (
             f"Remote sbatch script location must be set in context before executing {type(self).__name__}."
         )
+        print(self.output_file_location)
 
         output = conn.run(
             f"cd {remote_workspace_path} && sbatch --parsable --output={self.output_file_location} {remote_sbatch_path}",
@@ -277,13 +278,39 @@ class WaitForJobCompletion(Step):
     def run(self, ctx: Context):
         conn = ctx._connection
         job_id = ctx.job_id
+        remote_workspace_path = ctx.remote_workspace_path
+        output_file_location = ctx.job_output_file_location
+
         assert job_id is not None, (
             f"Job ID must be set in context before executing {type(self).__name__}."
         )
-
+        assert remote_workspace_path is not None, (
+            f"Remote workspace path must be set in context before executing {type(self).__name__}."
+        )
+        assert output_file_location is not None, (
+            f"Job output file location must be set in context before executing {type(self).__name__}."
+        )
         prev_state = None
-
+        output_file_detected = False
         while True:
+            output_file = (
+                conn.run(
+                    f"scontrol show job {job_id} | grep StdOut",
+                    hide=True,
+                )
+                .stdout.replace("StdOut=", "")
+                .strip()
+            )
+            if not output_file_detected:
+                command = f"(ls {remote_workspace_path} > /dev/null) && test -f {output_file} && echo 'exists'"
+                file_check = conn.run(
+                    command,
+                    hide=True,
+                    warn=True,
+                )
+                if file_check.stdout.strip() == "exists":
+                    output_file_detected = True
+                    print(f"[monitor] Output file detected: {output_file}")
             res = conn.run(
                 f"sacct -j {job_id} -X --format=JobID,State --noheader",
                 hide=True,
