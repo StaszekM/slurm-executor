@@ -22,7 +22,7 @@ from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
 executor = CloudpickleExecutor(
     deserialize_from="{{remote_call_location}}"
 )
-raise ValueError("Test error")
+
 executor.run()
 
 EOF

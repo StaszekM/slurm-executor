@@ -9,7 +9,6 @@ def responsive_tail(
     conn: fabric.Connection,
     path: str,
     poll_interval: float = 0.5,
-    on_output_callback: Callable[[str], Any] | None = None,
 ):
     """
     Tail a remote file over Fabric responsively.
@@ -35,8 +34,6 @@ def responsive_tail(
             output = res2.stdout
             if output.strip():
                 print(output, end="")
-                if on_output_callback:
-                    on_output_callback(output)
             last_size = size
 
         time.sleep(poll_interval)

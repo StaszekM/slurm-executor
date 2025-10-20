@@ -1,8 +1,5 @@
-import os
 import pathlib
-import sys
 import tempfile
-import termios
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -277,63 +274,32 @@ class SubmitSbatchScript(Step):
         return ctx
 
 
-class OutputTracker:
-    def __init__(self):
-        self.got_output = False
-
-    def write(self, s):
-        if s.strip():  # detect non-empty output
-            self.got_output = True
-        print(s, end="", flush=True)  # forward to stdout
-
-    def flush(self):
-        pass  # required for file-like interface
-
-
 class WaitForJobCompletion(Step):
     def __init__(self, poll_interval_ms: int) -> None:
         super().__init__()
         self.poll_interval_ms = poll_interval_ms
-        self.output_tracker = OutputTracker()
 
-    def tail_log(self, ctx: Context, tail_process_marker: str):
+    def tail_log(self, ctx: Context):
         connection_config = ctx.connection_config
         remote_host = connection_config.host
         user = connection_config.user
         port = connection_config.port
         remote_workspace = ctx.remote_workspace_path
         remote_log = ctx.job_output_file_location
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
 
         tail_conn = Connection(host=remote_host, user=user, port=port)
-
-        def callback(item: str):
-            self.output_tracker.got_output = True
 
         try:
             responsive_tail.responsive_tail(
                 tail_conn,
                 path=f"{remote_workspace}/{remote_log}",
                 poll_interval=0.5,
-                on_output_callback=callback,
             )
         except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError) as e:
             # Normal during remote process kill or connection close
             print(f"[tail] stopped: {type(e).__name__}")
         finally:
             tail_conn.close()
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-
-    def wait_for_log_sync(self, conn, path, retries=10, delay=1):
-        for _ in range(retries):
-            output = conn.run(f"stat {path}", hide=True, warn=True)
-            if output.ok:
-                return True
-            else:
-                print(output)
-            time.sleep(delay)
-        return False
 
     def run(self, ctx: Context):
         conn = ctx._connection
@@ -342,11 +308,7 @@ class WaitForJobCompletion(Step):
             f"Job ID must be set in context before executing {type(self).__name__}."
         )
 
-        tail_process_marker = f"slurm_executor_tail_{job_id}"
-
-        t_tail = threading.Thread(
-            target=self.tail_log, args=(ctx, tail_process_marker), daemon=True
-        )
+        t_tail = threading.Thread(target=self.tail_log, args=(ctx,), daemon=True)
         t_tail.start()
 
         prev_state = None
@@ -372,29 +334,6 @@ class WaitForJobCompletion(Step):
                 # kill only the tail we started by matching the custom argv0
                 # conn.run(f"pkill -f {tail_process_marker}", warn=False)
                 t_tail.join()
-
-                if self.output_tracker.got_output is False:
-                    output_file_location = conn.run(
-                        f"scontrol show job {job_id} | grep StdOut",
-                        hide=True,
-                    )
-
-                    output_file_location = output_file_location.stdout.strip().split(
-                        "="
-                    )[1]
-                    conn.run(
-                        f"ls -lh {os.path.dirname(output_file_location)}", hide=True
-                    )
-
-                    if self.wait_for_log_sync(
-                        conn,
-                        output_file_location,
-                    ):
-                        conn.run(
-                            f"cat {output_file_location}",
-                            hide=None,
-                        )
-                        print(flush=True)
 
                 if state != "COMPLETED":
                     raise Exception(f"Job {job_id} failed with state {state}.")
