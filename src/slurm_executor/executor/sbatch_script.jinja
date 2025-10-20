@@ -18,10 +18,15 @@ echo "Running"
 
 uv run - <<'EOF'
 from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
+import time
 
 executor = CloudpickleExecutor(
     deserialize_from="{{remote_call_location}}"
 )
+
+for _ in range(10):
+    print("Executor heartbeat")
+    time.sleep(1)
 
 executor.run()
 

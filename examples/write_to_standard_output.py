@@ -40,7 +40,7 @@ pipeline = Pipeline(
         ),
         SendSbatchScript(),
         SubmitSbatchScript(output_file_location="job.out"),
-        WaitForJobCompletion(poll_interval_ms=5000),
+        WaitForJobCompletion(poll_interval_ms=1000),
     ],
     connection_config=ConnectionConfig(
         host=remote,

@@ -1,6 +1,5 @@
 import pathlib
 import tempfile
-import threading
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -8,9 +7,6 @@ from typing import Optional, ParamSpec, TypeVar
 
 import cloudpickle
 import jinja2
-from fabric import Connection
-from invoke.exceptions import UnexpectedExit
-from paramiko.ssh_exception import SSHException
 
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.pipeline.Context import Context
@@ -278,38 +274,12 @@ class WaitForJobCompletion(Step):
         super().__init__()
         self.poll_interval_ms = poll_interval_ms
 
-    def tail_log(self, ctx: Context, tail_process_marker: str):
-        connection_config = ctx.connection_config
-        remote_host = connection_config.host
-        user = connection_config.user
-        port = connection_config.port
-        remote_workspace = ctx.remote_workspace_path
-        remote_log = ctx.job_output_file_location
-
-        tail_conn = Connection(host=remote_host, user=user, port=port)
-
-        cmd = f"bash -c \"exec -a {tail_process_marker} bash -c 'until [ -f {remote_workspace}/{remote_log} ]; do sleep 1; ls > /dev/null; done; tail -n +1 -f {remote_workspace}/{remote_log}'\""
-
-        try:
-            tail_conn.run(cmd)
-        except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError):
-            # Normal during remote process kill or connection close
-            pass
-        finally:
-            tail_conn.close()
-
     def run(self, ctx: Context):
         conn = ctx._connection
         job_id = ctx.job_id
         assert job_id is not None, (
             f"Job ID must be set in context before executing {type(self).__name__}."
         )
-        tail_process_marker = f"responsive_tail_job_{job_id}"
-
-        t_tail = threading.Thread(
-            target=self.tail_log, args=(ctx, tail_process_marker), daemon=True
-        )
-        t_tail.start()
 
         prev_state = None
 
@@ -331,10 +301,6 @@ class WaitForJobCompletion(Step):
             elif prev_state == "PENDING":
                 print(".", end="", flush=True)
             if state in {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"}:
-                # kill only the tail we started by matching the custom argv0
-                conn.run(f"pkill -f {tail_process_marker}", warn=False)
-                t_tail.join()
-
                 if state != "COMPLETED":
                     raise Exception(f"Job {job_id} failed with state {state}.")
 
