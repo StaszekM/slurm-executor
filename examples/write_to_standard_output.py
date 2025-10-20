@@ -12,6 +12,7 @@ from slurm_executor.pipeline.Step import (
     SendSbatchScript,
     SerializeCall,
     SubmitSbatchScript,
+    WaitForJobCompletion,
 )
 
 load_dotenv()
@@ -29,7 +30,7 @@ assert cpu_partition
 pipeline = Pipeline(
     steps=[
         RSyncWorkspaceToRemote(
-            source=".", destination="/data", exclusion_file="rsync-exclude.txt"
+            source=".", destination="~/remote_job", exclusion_file="rsync-exclude.txt"
         ),
         SerializeCall(),
         SendCall(),
@@ -38,7 +39,8 @@ pipeline = Pipeline(
             time="01:00:00",
         ),
         SendSbatchScript(),
-        SubmitSbatchScript(output_file_location="/data/job.out"),
+        SubmitSbatchScript(output_file_location="job.out"),
+        WaitForJobCompletion(poll_interval_ms=5000),
     ],
     connection_config=ConnectionConfig(
         host=remote,

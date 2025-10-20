@@ -1,11 +1,16 @@
 import pathlib
 import tempfile
+import threading
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, ParamSpec, TypeVar
 
 import cloudpickle
 import jinja2
+from fabric import Connection
+from invoke.exceptions import UnexpectedExit
+from paramiko.ssh_exception import SSHException
 
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.pipeline.Context import Context
@@ -202,7 +207,7 @@ class SendCall(Step):
             pty=False,
         )
 
-        ctx.remote_call_path = remote_call_location
+        ctx.remote_call_path = call_location.name
 
         return ctx
 
@@ -264,5 +269,63 @@ class SubmitSbatchScript(Step):
 
         ctx.job_output_file_location = self.output_file_location
         ctx.job_id = job_id
+
+        return ctx
+
+
+class WaitForJobCompletion(Step):
+    def __init__(self, poll_interval_ms: int) -> None:
+        super().__init__()
+        self.poll_interval_ms = poll_interval_ms
+
+    def tail_log(self, ctx: Context, tail_process_marker: str):
+        connection_config = ctx.connection_config
+        remote_host = connection_config.host
+        user = connection_config.user
+        port = connection_config.port
+        remote_workspace = ctx.remote_workspace_path
+        remote_log = ctx.job_output_file_location
+
+        with Connection(host=remote_host, user=user, port=port) as tail_conn:
+            cmd = f'cd {remote_workspace} && bash -c "exec -a {tail_process_marker} tail -n +1 -f --retry {remote_log}"'
+            try:
+                tail_conn.run(cmd, pty=True)
+            except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError) as e:
+                # Normal during remote process kill or connection close
+                print(f"[tail] stopped: {type(e).__name__}")
+
+    def run(self, ctx: Context):
+        conn = ctx._connection
+        job_id = ctx.job_id
+        assert job_id is not None, (
+            f"Job ID must be set in context before executing {type(self).__name__}."
+        )
+
+        tail_process_marker = f"slurm_executor_tail_{job_id}"
+
+        t_tail = threading.Thread(
+            target=self.tail_log, args=(ctx, tail_process_marker), daemon=True
+        )
+        t_tail.start()
+
+        while True:
+            res = conn.run(
+                f"sacct -j {job_id} --format=JobID,State --noheader",
+                hide=True,
+                warn=True,
+            )
+            out = res.stdout.strip()
+            if out:
+                # take last token of last non-empty line as State
+                state = out.splitlines()[-1].split()[-1]
+            else:
+                state = "UNKNOWN"
+            print(f"[monitor] job {job_id} state: {state}")
+            if state in {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"}:
+                print("[monitor] job finished — stopping tail.")
+                # kill only the tail we started by matching the custom argv0
+                conn.run(f"pkill -f {tail_process_marker}", warn=True)
+                break
+            time.sleep(self.poll_interval_ms / 1000.0)
 
         return ctx
