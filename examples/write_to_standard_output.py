@@ -36,7 +36,7 @@ pipeline = Pipeline(
         SendCall(),
         ComposeSbatchScript(
             partition=cpu_partition,
-            time="01:00:00",
+            time="00:05:00",
         ),
         SendSbatchScript(),
         SubmitSbatchScript(output_file_location="job.out"),

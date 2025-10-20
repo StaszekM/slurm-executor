@@ -1,5 +1,8 @@
+import os
 import pathlib
+import sys
 import tempfile
+import termios
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -14,6 +17,7 @@ from paramiko.ssh_exception import SSHException
 
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.pipeline.Context import Context
+from slurm_executor.utils import responsive_tail
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -273,10 +277,24 @@ class SubmitSbatchScript(Step):
         return ctx
 
 
+class OutputTracker:
+    def __init__(self):
+        self.got_output = False
+
+    def write(self, s):
+        if s.strip():  # detect non-empty output
+            self.got_output = True
+        print(s, end="", flush=True)  # forward to stdout
+
+    def flush(self):
+        pass  # required for file-like interface
+
+
 class WaitForJobCompletion(Step):
     def __init__(self, poll_interval_ms: int) -> None:
         super().__init__()
         self.poll_interval_ms = poll_interval_ms
+        self.output_tracker = OutputTracker()
 
     def tail_log(self, ctx: Context, tail_process_marker: str):
         connection_config = ctx.connection_config
@@ -285,14 +303,37 @@ class WaitForJobCompletion(Step):
         port = connection_config.port
         remote_workspace = ctx.remote_workspace_path
         remote_log = ctx.job_output_file_location
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
 
-        with Connection(host=remote_host, user=user, port=port) as tail_conn:
-            cmd = f'cd {remote_workspace} && bash -c "exec -a {tail_process_marker} tail -n +1 -f --retry {remote_log}"'
-            try:
-                tail_conn.run(cmd, pty=True)
-            except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError) as e:
-                # Normal during remote process kill or connection close
-                print(f"[tail] stopped: {type(e).__name__}")
+        tail_conn = Connection(host=remote_host, user=user, port=port)
+
+        def callback(item: str):
+            self.output_tracker.got_output = True
+
+        try:
+            responsive_tail.responsive_tail(
+                tail_conn,
+                path=f"{remote_workspace}/{remote_log}",
+                poll_interval=0.5,
+                on_output_callback=callback,
+            )
+        except (KeyboardInterrupt, UnexpectedExit, SSHException, EOFError) as e:
+            # Normal during remote process kill or connection close
+            print(f"[tail] stopped: {type(e).__name__}")
+        finally:
+            tail_conn.close()
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    def wait_for_log_sync(self, conn, path, retries=10, delay=1):
+        for _ in range(retries):
+            output = conn.run(f"stat {path}", hide=True, warn=True)
+            if output.ok:
+                return True
+            else:
+                print(output)
+            time.sleep(delay)
+        return False
 
     def run(self, ctx: Context):
         conn = ctx._connection
@@ -308,9 +349,11 @@ class WaitForJobCompletion(Step):
         )
         t_tail.start()
 
+        prev_state = None
+
         while True:
             res = conn.run(
-                f"sacct -j {job_id} --format=JobID,State --noheader",
+                f"sacct -j {job_id} -X --format=JobID,State --noheader",
                 hide=True,
                 warn=True,
             )
@@ -320,12 +363,44 @@ class WaitForJobCompletion(Step):
                 state = out.splitlines()[-1].split()[-1]
             else:
                 state = "UNKNOWN"
-            print(f"[monitor] job {job_id} state: {state}")
+
+            if state != prev_state:
+                print(f"[monitor] job {job_id} state changed: {prev_state} -> {state}")
+            elif prev_state == "PENDING":
+                print(".", end="", flush=True)
             if state in {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"}:
-                print("[monitor] job finished — stopping tail.")
                 # kill only the tail we started by matching the custom argv0
-                conn.run(f"pkill -f {tail_process_marker}", warn=True)
+                # conn.run(f"pkill -f {tail_process_marker}", warn=False)
+                t_tail.join()
+
+                if self.output_tracker.got_output is False:
+                    output_file_location = conn.run(
+                        f"scontrol show job {job_id} | grep StdOut",
+                        hide=True,
+                    )
+
+                    output_file_location = output_file_location.stdout.strip().split(
+                        "="
+                    )[1]
+                    conn.run(
+                        f"ls -lh {os.path.dirname(output_file_location)}", hide=True
+                    )
+
+                    if self.wait_for_log_sync(
+                        conn,
+                        output_file_location,
+                    ):
+                        conn.run(
+                            f"cat {output_file_location}",
+                            hide=None,
+                        )
+                        print(flush=True)
+
+                if state != "COMPLETED":
+                    raise Exception(f"Job {job_id} failed with state {state}.")
+
                 break
+            prev_state = state
             time.sleep(self.poll_interval_ms / 1000.0)
 
         return ctx
