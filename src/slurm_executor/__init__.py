@@ -1,3 +1,3 @@
-from .broker import slurm_task
+from .pipeline.Pipeline import Pipeline
 
-__all__ = ["slurm_task"]
+__all__ = ["Pipeline"]

@@ -3,9 +3,9 @@ import os
 
 from dotenv import load_dotenv
 
+from slurm_executor import Pipeline
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
 from slurm_executor.pipeline.ComposeSbatchScript import SendSbatchScript
-from slurm_executor.pipeline.Pipeline import Pipeline
 from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspace
 from slurm_executor.pipeline.SerializeCall import (
     SendCall,
@@ -30,7 +30,7 @@ pipeline = Pipeline(
         RSyncWorkspace(
             local_root=".",
             remote_root=f"/home/{user}/remote_job",
-            exclusion_file="rsync-exclude.txt",
+            exclude_from="rsync-exclude.txt",
             direction="to_remote",
         ),
         SendCall(),

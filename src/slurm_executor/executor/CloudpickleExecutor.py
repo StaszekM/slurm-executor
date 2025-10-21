@@ -1,18 +1,8 @@
 from typing import Any
 
 import cloudpickle
-import jinja2
 
 from slurm_executor.models.SerializableCallData import SerializableCallData
-
-with open("src/slurm_executor/executor/sbatch_script.jinja") as f:
-    SBATCH_TEMPLATE = jinja2.Template(f.read())
-
-
-def compose_sbatch_script(partition: str, time: str, workspace_location: str) -> str:
-    return SBATCH_TEMPLATE.render(
-        partition=partition, time=time, workspace_location=workspace_location
-    )
 
 
 class CloudpickleExecutor:

@@ -10,22 +10,22 @@ class RSyncWorkspace(Step):
         local_root: str,
         remote_root: str,
         direction: RsyncDirection,
-        exclusion_file: str | None = None,
-        inclusion_file: str | None = None,
+        exclude_from: str | None = None,
+        include_only: str | None = None,
     ) -> None:
         super().__init__()
         self.local_root = local_root
         self.remote_root = remote_root
         self.direction: RsyncDirection = direction
 
-        assert not (inclusion_file and exclusion_file), (
-            "Cannot specify both inclusion and exclusion files."
+        assert not (include_only and exclude_from), (
+            "Cannot specify both include_only and exclude_from files."
         )
-        assert inclusion_file or exclusion_file, (
-            "Must specify either inclusion or exclusion file."
+        assert include_only or exclude_from, (
+            "Must specify either include_only or exclude_from file."
         )
-        self.exclusion_file = exclusion_file
-        self.inclusion_file = inclusion_file
+        self.exclude_from = exclude_from
+        self.include_only = include_only
 
     def run(self, ctx: Context):
         conn = ctx._connection
@@ -45,8 +45,8 @@ class RSyncWorkspace(Step):
                 host=host,
                 local_root=self.local_root,
                 remote_root=self.remote_root,
-                exclusion_file=self.exclusion_file,
-                inclusion_file=self.inclusion_file,
+                exclusion_file=self.exclude_from,
+                inclusion_file=self.include_only,
                 direction=self.direction,
             ),
             pty=False,
