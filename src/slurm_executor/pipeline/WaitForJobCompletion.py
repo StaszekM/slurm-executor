@@ -66,8 +66,6 @@ class WaitForJobCompletion(Step):
             elif prev_state == "PENDING":
                 print(".", end="", flush=True)
             if state in {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"}:
-                if state != "COMPLETED":
-                    raise Exception(f"Job {job_id} failed with state {state}.")
                 stop_event.set()
                 t.join()
                 # write remaining bytes
@@ -75,6 +73,9 @@ class WaitForJobCompletion(Step):
                     conn.run(f"tail -c +{stats['bytes_read'] + 1} {output_file}")
                 else:
                     conn.run(f"cat {output_file}")
+
+                if state != "COMPLETED":
+                    raise Exception(f"Job {job_id} failed with state {state}.")
                 break
             prev_state = state
             time.sleep(self.poll_interval_ms / 1000.0)

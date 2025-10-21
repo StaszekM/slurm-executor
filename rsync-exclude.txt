@@ -2,5 +2,6 @@
 .venv/
 .ruff_cache/
 rsync-exclude.txt
+rsync-include.txt
 .env
 .vscode

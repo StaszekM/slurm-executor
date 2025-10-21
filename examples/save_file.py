@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 
 from dotenv import load_dotenv
 
@@ -40,6 +41,12 @@ pipeline = Pipeline(
         ),
         SubmitSbatchScript(output_file_location=f"/home/{user}/remote_job/job.out"),
         WaitForJobCompletion(poll_interval_ms=1000),
+        RSyncWorkspace(
+            local_root=".",
+            remote_root=f"/home/{user}/remote_job",
+            inclusion_file="rsync-include.txt",
+            direction="from_remote",
+        ),
     ],
     connection_config=ConnectionConfig(
         host=remote,
@@ -50,10 +57,17 @@ pipeline = Pipeline(
 
 
 @pipeline.remote_run
-def write_to_standard_output(text: str):
-    print(f"Writing to standard output: {text}")
+def save_to_file(filename: str):
+    random_number = random.randint(0, 10)
+
+    print(f"Writing number {random_number} to file: {filename}")
+
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+    with open(filename, "w") as f:
+        f.write(f"{random_number}\n")
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    write_to_standard_output("Hello!")
+    save_to_file("./outputs/file.txt")

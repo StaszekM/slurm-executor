@@ -43,9 +43,9 @@ class SendCall(Step):
                     port=ctx.connection_config.port,
                     user=ctx.connection_config.user,
                     host=ctx.connection_config.host,
-                    source=str(call_file),
-                    destination=remote_call_location,
-                    exclusion_file=None,
+                    local_root=str(call_file),
+                    remote_root=remote_call_location,
+                    direction="to_remote",
                 ),
                 pty=False,
             )

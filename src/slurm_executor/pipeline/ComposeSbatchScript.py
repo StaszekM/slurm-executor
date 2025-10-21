@@ -69,9 +69,10 @@ class SendSbatchScript(Step):
                     port=ctx.connection_config.port,
                     user=ctx.connection_config.user,
                     host=ctx.connection_config.host,
-                    source=str(local_script),
-                    destination=remote_sbatch_location,
+                    local_root=str(local_script),
+                    remote_root=remote_sbatch_location,
                     exclusion_file=None,
+                    direction="to_remote",
                 ),
                 pty=False,
             )
