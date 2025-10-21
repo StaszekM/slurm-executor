@@ -5,11 +5,14 @@ from slurm_executor.pipeline.Step import Step
 
 class RSyncWorkspaceToRemote(Step):
     def __init__(
-        self, source: str, destination: str, exclusion_file: str | None = None
+        self,
+        workspace_root: str,
+        workspace_destination: str,
+        exclusion_file: str | None = None,
     ) -> None:
         super().__init__()
-        self.source = source
-        self.destination = destination
+        self.source = workspace_root
+        self.destination = workspace_destination
         self.exclusion_file = exclusion_file
 
     def run(self, ctx: Context):

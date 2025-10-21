@@ -4,13 +4,11 @@ import os
 from dotenv import load_dotenv
 
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.ComposeSbatchScript import ComposeSbatchScript
+from slurm_executor.pipeline.ComposeSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.Pipeline import Pipeline
 from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspaceToRemote
-from slurm_executor.pipeline.SendCall import SendCall
-from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.SerializeCall import (
-    SerializeCall,
+    SendCall,
 )
 from slurm_executor.pipeline.SubmitSbatchScript import SubmitSbatchScript
 from slurm_executor.pipeline.WaitForJobCompletion import WaitForJobCompletion
@@ -30,17 +28,15 @@ assert cpu_partition
 pipeline = Pipeline(
     steps=[
         RSyncWorkspaceToRemote(
-            source=".",
-            destination=f"/home/{user}/remote_job",
+            workspace_root=".",
+            workspace_destination=f"/home/{user}/remote_job",
             exclusion_file="rsync-exclude.txt",
         ),
-        SerializeCall(),
         SendCall(),
-        ComposeSbatchScript(
+        SendSbatchScript(
             partition=cpu_partition,
             time="00:05:00",
         ),
-        SendSbatchScript(),
         SubmitSbatchScript(output_file_location=f"/home/{user}/remote_job/job.out"),
         WaitForJobCompletion(poll_interval_ms=1000),
     ],

@@ -1,11 +1,10 @@
 import pathlib
 import tempfile
-from pathlib import Path
-from typing import Optional
 
 import jinja2
 
 from slurm_executor.models.Context import Context
+from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
 from slurm_executor.pipeline.Step import Step
 
 with open("src/slurm_executor/executor/sbatch_script.jinja") as f:
@@ -23,23 +22,21 @@ def compose_sbatch_script(
     )
 
 
-class ComposeSbatchScript(Step):
+class SendSbatchScript(Step):
     def __init__(
         self,
         partition: str,
         time: str,
-        serialize_to: Optional[Path] = None,
     ) -> None:
         super().__init__()
         self.partition = partition
         self.time = time
 
-        self.serialize_to = serialize_to
-
         with open("src/slurm_executor/executor/sbatch_script.jinja") as f:
             self.sbatch_template = jinja2.Template(f.read())
 
     def run(self, ctx: Context):
+        conn = ctx._connection
         workspace_location = ctx.remote_workspace_path
         remote_call_location = ctx.remote_call_path
         assert workspace_location is not None, (
@@ -56,18 +53,29 @@ class ComposeSbatchScript(Step):
             workspace_location=workspace_location,
             remote_call_location=remote_call_location,
         )
-
-        if self.serialize_to is not None:
-            with open(self.serialize_to, "w") as f:
-                f.write(composed_file_contents)
-            ctx.serialized_sbatch_path = self.serialize_to
-        else:
-            tmp = tempfile.TemporaryDirectory(delete=False)
-            local_job_dir = pathlib.Path(tmp.name)
+        with tempfile.TemporaryDirectory() as tmp:
             job_script_name = "job.sh"
+            local_job_dir = pathlib.Path(tmp)
             local_script = local_job_dir / job_script_name
             with open(local_script, "w") as f:
                 f.write(composed_file_contents)
-            ctx.serialized_sbatch_path = local_script
+
+            conn = ctx._connection
+
+            remote_sbatch_location = workspace_location + "/" + job_script_name
+
+            conn.local(
+                compose_rsync_command(
+                    port=ctx.connection_config.port,
+                    user=ctx.connection_config.user,
+                    host=ctx.connection_config.host,
+                    source=str(local_script),
+                    destination=remote_sbatch_location,
+                    exclusion_file=None,
+                ),
+                pty=False,
+            )
+
+            ctx.remote_sbatch_path = remote_sbatch_location
 
         return ctx
