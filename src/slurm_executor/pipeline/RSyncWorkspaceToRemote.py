@@ -21,6 +21,9 @@ class RSyncWorkspace(Step):
         assert not (inclusion_file and exclusion_file), (
             "Cannot specify both inclusion and exclusion files."
         )
+        assert inclusion_file or exclusion_file, (
+            "Must specify either inclusion or exclusion file."
+        )
         self.exclusion_file = exclusion_file
         self.inclusion_file = inclusion_file
 
