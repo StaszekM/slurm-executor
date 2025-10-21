@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+from typing import Any, Dict
 
 import paramiko
 
@@ -11,7 +12,7 @@ def tail_remote_file(
     port: int,
     remote_path: str,
     stop_event: threading.Event,
-    stats: dict,
+    stats: Dict[str, Any],
 ):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

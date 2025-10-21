@@ -8,6 +8,7 @@ showing that the mock works independently of any test framework.
 
 import sys
 from pathlib import Path
+from typing import List
 
 # Add src to path so we can import slurm_executor
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -133,7 +134,7 @@ def main():
         test_strict_mode,
     ]
 
-    failed_tests = []
+    failed_tests: List[str] = []
 
     for test_func in tests:
         try:
