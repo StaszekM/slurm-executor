@@ -29,8 +29,8 @@ assert cpu_partition
 pipeline = Pipeline(
     steps=[
         RSyncWorkspace(
-            local_root=".",
-            remote_root=f"/home/{user}/remote_job",
+            local_root="./",
+            remote_root=f"/home/{user}/remote_job/",
             exclusion_file="rsync-exclude.txt",
             direction="to_remote",
         ),
@@ -42,8 +42,8 @@ pipeline = Pipeline(
         SubmitSbatchScript(output_file_location=f"/home/{user}/remote_job/job.out"),
         WaitForJobCompletion(poll_interval_ms=1000),
         RSyncWorkspace(
-            local_root=".",
-            remote_root=f"/home/{user}/remote_job",
+            local_root="./",
+            remote_root=f"/home/{user}/remote_job/",
             inclusion_file="rsync-include.txt",
             direction="from_remote",
         ),
