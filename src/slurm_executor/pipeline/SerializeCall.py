@@ -22,7 +22,7 @@ class SendCall(Step):
         super().__init__()
 
     def run(self, ctx: Context):
-        func = ctx.function
+        func = ctx.function  # pyright: ignore[reportUnknownMemberType]
         args = ctx.args
         kwargs = ctx.kwargs
         remote_workspace = ctx.remote_workspace_path
@@ -41,12 +41,12 @@ class SendCall(Step):
             local_job_dir = pathlib.Path(tmp)
             call_file = local_job_dir / serialized_call_filename
             with open(call_file, "wb") as f:
-                cloudpickle.dump(call_data, f)
+                cloudpickle.dump(call_data, f)  # pyright: ignore[reportUnknownMemberType]
                 conn = ctx._connection
 
             remote_call_location = remote_workspace + "/" + serialized_call_filename
 
-            conn.local(
+            conn.local(  # pyright: ignore[reportUnknownMemberType]
                 compose_rsync_command(
                     port=ctx.connection_config.port,
                     user=ctx.connection_config.user,

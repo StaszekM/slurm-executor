@@ -1,5 +1,6 @@
 import threading
 import time
+from typing import Any, Dict
 
 from slurm_executor.models.Context import Context
 from slurm_executor.models.Step import Step
@@ -41,7 +42,7 @@ class WaitForJobCompletion(Step):
         output_file_detected = False
         output_file = get_job_stdout_path(conn, job_id)
 
-        stats = {}
+        stats: Dict[str, Any] = {}
 
         while True:
             if not output_file_detected:

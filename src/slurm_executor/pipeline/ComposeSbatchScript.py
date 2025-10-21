@@ -72,7 +72,7 @@ class SendSbatchScript(Step):
 
             remote_sbatch_location = workspace_location + "/" + job_script_name
 
-            conn.local(
+            conn.local(  # pyright: ignore[reportUnknownMemberType]
                 compose_rsync_command(
                     port=ctx.connection_config.port,
                     user=ctx.connection_config.user,

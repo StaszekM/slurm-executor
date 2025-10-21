@@ -46,7 +46,7 @@ class RSyncWorkspace(Step):
             pty=False,
         )
 
-        conn.local(
+        conn.local(  # pyright: ignore[reportUnknownMemberType]
             compose_rsync_command(
                 port=port,
                 user=user,
