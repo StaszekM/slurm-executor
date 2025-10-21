@@ -2,7 +2,7 @@ import threading
 import time
 
 from slurm_executor.models.Context import Context
-from slurm_executor.pipeline.Step import Step
+from slurm_executor.models.Step import Step
 from slurm_executor.slurm_cli.get_job_state import get_job_state
 from slurm_executor.slurm_cli.get_job_stdout_path import get_job_stdout_path
 from slurm_executor.slurm_cli.verify_file_availability import verify_file_availability
@@ -10,6 +10,14 @@ from slurm_executor.utils.tail_remote_file import tail_remote_file
 
 
 class WaitForJobCompletion(Step):
+    @property
+    def provides(self) -> list[str]:
+        return []
+
+    @property
+    def requires(self) -> list[str]:
+        return ["job_id", "remote_workspace_path", "job_output_file_location"]
+
     def __init__(self, poll_interval_ms: int) -> None:
         super().__init__()
         self.poll_interval_ms = poll_interval_ms
@@ -48,9 +56,9 @@ class WaitForJobCompletion(Step):
                     t = threading.Thread(
                         target=tail_remote_file,
                         args=(
-                            ctx._connection.host,
-                            ctx._connection.user,
-                            ctx._connection.port,
+                            ctx.connection_config.host,
+                            ctx.connection_config.user,
+                            ctx.connection_config.port,
                             output_file,
                             stop_event,
                             stats,

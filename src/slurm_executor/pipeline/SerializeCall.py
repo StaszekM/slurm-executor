@@ -6,10 +6,18 @@ import cloudpickle
 from slurm_executor.models.Context import Context
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
-from slurm_executor.pipeline.Step import Step
+from slurm_executor.models.Step import Step
 
 
 class SendCall(Step):
+    @property
+    def provides(self) -> list[str]:
+        return ["remote_call_path"]
+
+    @property
+    def requires(self) -> list[str]:
+        return ["remote_workspace_path"]
+
     def __init__(self) -> None:
         super().__init__()
 

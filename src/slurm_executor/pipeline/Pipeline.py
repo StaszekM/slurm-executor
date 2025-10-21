@@ -5,7 +5,7 @@ from fabric import Connection
 
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
 from slurm_executor.models.Context import Context
-from slurm_executor.pipeline.Step import Step
+from slurm_executor.models.Step import Step
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -31,7 +31,20 @@ class Pipeline(Generic[P, T]):
             step.run(ctx)
         return ctx
 
+    def verify(self) -> None:
+        provided: set[str] = set()
+        for step in self.steps:
+            for req in step.requires:
+                if req not in provided:
+                    raise ValueError(
+                        f"Step {step.__class__.__name__} requires '{req}' which is not provided by any previous step."
+                    )
+            for prov in step.provides:
+                provided.add(prov)
+
     def remote_run(self, func: Callable[P, T]) -> RemoteCallable[P, T]:
+        self.verify()
+
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
             with Connection(**self.connection_config.model_dump()) as conn:
                 ctx = Context(

@@ -14,8 +14,6 @@ class Context(BaseModel):
     _connection: fabric.Connection = PrivateAttr()
     connection_config: ConnectionConfig
 
-    serialized_call_path: Optional[Path] = None
-    serialized_sbatch_path: Optional[Path] = None
     remote_workspace_path: Optional[str] = None
     remote_call_path: Optional[str] = None
     remote_sbatch_path: Optional[str] = None

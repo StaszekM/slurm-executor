@@ -29,7 +29,7 @@ pipeline = Pipeline(
     steps=[
         RSyncWorkspace(
             local_root=".",
-            remote_root=f"/home/{user}/remote_job",
+            remote_root=f"/home/{user}/remote_job/",
             exclude_from="rsync-exclude.txt",
             direction="to_remote",
         ),

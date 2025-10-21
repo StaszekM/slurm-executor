@@ -1,10 +1,18 @@
 from slurm_executor.models.Context import Context
 from slurm_executor.models.RsyncDirection import RsyncDirection
+from slurm_executor.models.Step import Step
 from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
-from slurm_executor.pipeline.Step import Step
 
 
 class RSyncWorkspace(Step):
+    @property
+    def provides(self) -> list[str]:
+        return ["remote_workspace_path"]
+
+    @property
+    def requires(self) -> list[str]:
+        return []
+
     def __init__(
         self,
         local_root: str,
