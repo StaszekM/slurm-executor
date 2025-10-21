@@ -3,6 +3,11 @@
 ## Project Overview
 This is a Python library for transparent execution of heavy computational jobs on SLURM clusters. The core concept is wrapping functions with a decorator to offload execution to HPC resources while maintaining transparent local development experience.
 
+## Local development with `uv`
+
+- The project works using `uv` package manager.
+- Local commands are usually expected to be run within `uv` environment, for example `uv run pytest`
+
 ## Architecture: Pipeline-Based Execution
 
 The system uses a **Pipeline of Steps** pattern where each step has explicit dependencies:
