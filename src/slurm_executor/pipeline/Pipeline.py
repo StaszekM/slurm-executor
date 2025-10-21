@@ -3,8 +3,8 @@ from typing import Any, Callable, Generic, List, ParamSpec, Protocol, TypeVar, c
 
 from fabric import Connection
 
-from slurm_executor.pipeline.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.Context import Context
+from slurm_executor.models.ConnectionConfig import ConnectionConfig
+from slurm_executor.models.Context import Context
 from slurm_executor.pipeline.Step import Step
 
 P = ParamSpec("P")

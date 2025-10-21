@@ -3,17 +3,17 @@ import os
 
 from dotenv import load_dotenv
 
-from slurm_executor.pipeline.ConnectionConfig import ConnectionConfig
+from slurm_executor.models.ConnectionConfig import ConnectionConfig
+from slurm_executor.pipeline.ComposeSbatchScript import ComposeSbatchScript
 from slurm_executor.pipeline.Pipeline import Pipeline
-from slurm_executor.pipeline.Step import (
-    ComposeSbatchScript,
-    RSyncWorkspaceToRemote,
-    SendCall,
-    SendSbatchScript,
+from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspaceToRemote
+from slurm_executor.pipeline.SendCall import SendCall
+from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
+from slurm_executor.pipeline.SerializeCall import (
     SerializeCall,
-    SubmitSbatchScript,
-    WaitForJobCompletion,
 )
+from slurm_executor.pipeline.SubmitSbatchScript import SubmitSbatchScript
+from slurm_executor.pipeline.WaitForJobCompletion import WaitForJobCompletion
 
 load_dotenv()
 

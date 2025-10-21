@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import fabric
 from pydantic import BaseModel, PrivateAttr
 
-from slurm_executor.pipeline.Pipeline import ConnectionConfig
+from slurm_executor.models.ConnectionConfig import ConnectionConfig
 
 
 class Context(BaseModel):
