@@ -20,14 +20,14 @@ class SubmitSbatchScript(Step):
         remote_sbatch_path = ctx.remote_sbatch_path
         remote_workspace_path = ctx.remote_workspace_path
         assert remote_workspace_path is not None, (
-            f"Remote workspace location must be set in context before executing {type(self).__name__}."
+            f"Remote workspace location must be set in context before executing {type(self).__name__}."  # noqa: E501
         )
         assert remote_sbatch_path is not None, (
-            f"Remote sbatch script location must be set in context before executing {type(self).__name__}."
+            f"Remote sbatch script location must be set in context before executing {type(self).__name__}."  # noqa: E501
         )
 
         output = conn.run(
-            f"cd {remote_workspace_path} && sbatch --parsable --output={self.output_file_location} {remote_sbatch_path}",
+            f"cd {remote_workspace_path} && sbatch --parsable --output={self.output_file_location} {remote_sbatch_path}",  # noqa: E501
             pty=False,
             hide=None,
         )

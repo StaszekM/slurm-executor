@@ -37,7 +37,7 @@ class Pipeline(Generic[P, T]):
             for req in step.requires:
                 if req not in provided:
                     raise ValueError(
-                        f"Step {step.__class__.__name__} requires '{req}' which is not provided by any previous step."
+                        f"Step {step.__class__.__name__} requires '{req}' which is not provided by any previous step."  # noqa: E501
                     )
             for prov in step.provides:
                 provided.add(prov)

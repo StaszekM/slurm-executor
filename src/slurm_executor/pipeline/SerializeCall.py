@@ -5,8 +5,8 @@ import cloudpickle
 
 from slurm_executor.models.Context import Context
 from slurm_executor.models.SerializableCallData import SerializableCallData
-from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
 from slurm_executor.models.Step import Step
+from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
 
 
 class SendCall(Step):
@@ -27,7 +27,7 @@ class SendCall(Step):
         kwargs = ctx.kwargs
         remote_workspace = ctx.remote_workspace_path
         assert remote_workspace is not None, (
-            f"Remote workspace location must be set in context before executing {type(self).__name__}."
+            f"Remote workspace location must be set in context before executing {type(self).__name__}."  # noqa: E501
         )
 
         call_data = SerializableCallData(

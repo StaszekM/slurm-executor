@@ -32,10 +32,10 @@ class WaitForJobCompletion(Step):
             f"Job ID must be set in context before executing {type(self).__name__}."
         )
         assert remote_workspace_path is not None, (
-            f"Remote workspace path must be set in context before executing {type(self).__name__}."
+            f"Remote workspace path must be set in context before executing {type(self).__name__}."  # noqa: E501
         )
         assert output_file_location is not None, (
-            f"Job output file location must be set in context before executing {type(self).__name__}."
+            f"Job output file location must be set in context before executing {type(self).__name__}."  # noqa: E501
         )
         prev_state = None
         output_file_detected = False
