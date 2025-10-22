@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from slurm_executor import Pipeline
+from slurm_executor.hooks.CancelJobOnFailure import CancelJobHook
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
 from slurm_executor.pipeline.RSyncWorkspace import RSyncWorkspace
 from slurm_executor.pipeline.SendCall import (
@@ -47,6 +48,9 @@ pipeline = Pipeline(
         user=user,
         port=int(port),
     ),
+    hooks=[
+        CancelJobHook(),
+    ],
 )
 
 

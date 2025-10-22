@@ -5,6 +5,7 @@ from fabric import Connection
 
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
 from slurm_executor.models.Context import Context
+from slurm_executor.models.HookProtocol import Hook
 from slurm_executor.models.Step import Step
 
 P = ParamSpec("P")
@@ -21,15 +22,31 @@ class RemoteCallable(Protocol[P, T]):
 
 
 class Pipeline(Generic[P, T]):
-    def __init__(self, steps: List[Step], connection_config: ConnectionConfig):
+    def __init__(
+        self,
+        steps: List[Step],
+        connection_config: ConnectionConfig,
+        hooks: List[Hook] | None = None,
+    ):
         self.steps = steps
         self.connection_config = connection_config
+        self.hooks = hooks or []
 
     def run(self, ctx: Context):
-        for step in self.steps:
-            logger.info(f"Running step: {step.__class__.__name__}")
-            step.run(ctx)
-        return ctx
+        exception_occurred = None
+        try:
+            for step in self.steps:
+                logger.info(f"Running step: {step.__class__.__name__}")
+                step.run(ctx)
+            return ctx
+        except BaseException as e:
+            logger.error(f"Pipeline failed: {e}")
+            exception_occurred = e
+        finally:
+            self._run_hooks(ctx, exception_occurred)
+
+        if exception_occurred:
+            raise exception_occurred
 
     def verify(self) -> None:
         provided: set[str] = set()
@@ -60,3 +77,11 @@ class Pipeline(Generic[P, T]):
         wrapper.local_run = func
 
         return cast(RemoteCallable[P, T], wrapper)
+
+    def _run_hooks(self, ctx: Context, exception: BaseException | None) -> None:
+        for hook in self.hooks:
+            try:
+                hook(ctx, exception)
+            except Exception as hook_error:
+                logger.error(f"Hook {hook.__class__.__name__} failed: {hook_error}")
+                # Hooks should never break the pipeline
