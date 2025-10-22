@@ -9,7 +9,7 @@ from slurm_executor.models.Step import Step
 from slurm_executor.utils.append_path_slash_if_missing import (
     append_path_slash_if_missing,
 )
-from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
+from slurm_executor.utils.compose_rsync_command import compose_rsync_command
 
 with (
     pkg_resources.files("slurm_executor.templates")

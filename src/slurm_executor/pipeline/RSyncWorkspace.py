@@ -3,7 +3,7 @@ import logging
 from slurm_executor.models.Context import Context
 from slurm_executor.models.RsyncDirection import RsyncDirection
 from slurm_executor.models.Step import Step
-from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
+from slurm_executor.utils.compose_rsync_command import compose_rsync_command
 
 logger = logging.getLogger(__name__)
 

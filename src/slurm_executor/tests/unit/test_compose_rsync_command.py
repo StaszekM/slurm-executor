@@ -2,7 +2,7 @@
 
 import pytest
 
-from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
+from slurm_executor.utils.compose_rsync_command import compose_rsync_command
 
 
 class TestComposeRsyncCommand:

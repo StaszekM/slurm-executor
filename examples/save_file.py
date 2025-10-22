@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from slurm_executor import Pipeline
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspace
+from slurm_executor.pipeline.RSyncWorkspace import RSyncWorkspace
 from slurm_executor.pipeline.SendCall import (
     SendCall,
 )

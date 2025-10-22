@@ -6,7 +6,7 @@ import pytest
 
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
 from slurm_executor.models.Context import Context
-from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspace
+from slurm_executor.pipeline.RSyncWorkspace import RSyncWorkspace
 
 
 class TestRSyncWorkspace:
@@ -86,7 +86,7 @@ class TestRSyncWorkspace:
         """Test that initialization adds trailing slashes to paths."""
         # Arrange & Act
         with patch(
-            "slurm_executor.pipeline.RSyncWorkspaceToRemote.logger"
+            "slurm_executor.pipeline.RSyncWorkspace.logger"
         ) as mock_logger:
             step = RSyncWorkspace(
                 local_root="/local",  # No trailing slash
@@ -115,7 +115,7 @@ class TestRSyncWorkspace:
         """Test that initialization preserves existing trailing slashes."""
         # Arrange & Act
         with patch(
-            "slurm_executor.pipeline.RSyncWorkspaceToRemote.logger"
+            "slurm_executor.pipeline.RSyncWorkspace.logger"
         ) as mock_logger:
             step = RSyncWorkspace(
                 local_root="/local/",
@@ -151,7 +151,7 @@ class TestRSyncWorkspace:
                 local_root="/local/", remote_root="/remote/", direction="to_remote"
             )
 
-    @patch("slurm_executor.pipeline.RSyncWorkspaceToRemote.compose_rsync_command")
+    @patch("slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command")
     def test_run_to_remote_with_exclude_file(self, mock_compose_rsync, base_context):
         """Test successful run with to_remote direction and exclude file."""
         # Arrange
@@ -189,7 +189,7 @@ class TestRSyncWorkspace:
         )
         assert result_ctx.remote_workspace_path == "/remote/"
 
-    @patch("slurm_executor.pipeline.RSyncWorkspaceToRemote.compose_rsync_command")
+    @patch("slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command")
     def test_run_from_remote_with_include_file(self, mock_compose_rsync, base_context):
         """Test successful run with from_remote direction and include file."""
         # Arrange
@@ -227,7 +227,7 @@ class TestRSyncWorkspace:
         )
         assert result_ctx.remote_workspace_path == "/remote/"
 
-    @patch("slurm_executor.pipeline.RSyncWorkspaceToRemote.compose_rsync_command")
+    @patch("slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command")
     def test_run_mkdir_failure(self, mock_compose_rsync, base_context):
         """Test handling of mkdir failure."""
         # Arrange
@@ -249,7 +249,7 @@ class TestRSyncWorkspace:
         mock_compose_rsync.assert_not_called()
         base_context._connection.local.assert_not_called()
 
-    @patch("slurm_executor.pipeline.RSyncWorkspaceToRemote.compose_rsync_command")
+    @patch("slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command")
     def test_run_rsync_failure(self, mock_compose_rsync, base_context):
         """Test handling of rsync failure."""
         # Arrange
@@ -273,7 +273,7 @@ class TestRSyncWorkspace:
             "rsync command", pty=False
         )
 
-    @patch("slurm_executor.pipeline.RSyncWorkspaceToRemote.compose_rsync_command")
+    @patch("slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command")
     def test_run_sets_context_remote_workspace_path(
         self, mock_compose_rsync, base_context
     ):
@@ -310,7 +310,7 @@ class TestRSyncWorkspace:
         base_context.connection_config.port = 9999
 
         mock_module = (
-            "slurm_executor.pipeline.RSyncWorkspaceToRemote.compose_rsync_command"
+            "slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command"
         )
         with patch(mock_module) as mock_compose_rsync:
             mock_compose_rsync.return_value = "rsync command"
@@ -353,7 +353,7 @@ class TestRSyncWorkspace:
     ):
         """Test various path normalization scenarios."""
         # Arrange & Act
-        with patch("slurm_executor.pipeline.RSyncWorkspaceToRemote.logger"):
+        with patch("slurm_executor.pipeline.RSyncWorkspace.logger"):
             step = RSyncWorkspace(
                 local_root=local_root,
                 remote_root=remote_root,
