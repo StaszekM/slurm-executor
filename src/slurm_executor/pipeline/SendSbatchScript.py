@@ -1,3 +1,4 @@
+import importlib.resources as pkg_resources
 import pathlib
 import tempfile
 
@@ -7,7 +8,11 @@ from slurm_executor.models.Context import Context
 from slurm_executor.models.Step import Step
 from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
 
-with open("src/slurm_executor/executor/sbatch_script.jinja") as f:
+with (
+    pkg_resources.files("slurm_executor.templates")
+    .joinpath("sbatch_script.jinja")
+    .open("r") as f
+):
     SBATCH_TEMPLATE = jinja2.Template(f.read())
 
 
@@ -39,9 +44,6 @@ class SendSbatchScript(Step):
         super().__init__()
         self.partition = partition
         self.time = time
-
-        with open("src/slurm_executor/executor/sbatch_script.jinja") as f:
-            self.sbatch_template = jinja2.Template(f.read())
 
     def run(self, ctx: Context):
         conn = ctx._connection

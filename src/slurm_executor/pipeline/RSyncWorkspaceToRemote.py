@@ -1,7 +1,11 @@
+import logging
+
 from slurm_executor.models.Context import Context
 from slurm_executor.models.RsyncDirection import RsyncDirection
 from slurm_executor.models.Step import Step
 from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
+
+logger = logging.getLogger(__name__)
 
 
 class RSyncWorkspace(Step):
@@ -25,6 +29,17 @@ class RSyncWorkspace(Step):
         self.local_root = local_root
         self.remote_root = remote_root
         self.direction: RsyncDirection = direction
+
+        if not local_root.endswith("/"):
+            logger.warning(
+                f"Local root '{local_root}' does not end with '/' which may lead to unexpected behavior. Adding '/' to the end."
+            )
+            self.local_root = local_root + "/"
+        if not remote_root.endswith("/"):
+            logger.warning(
+                f"Remote root '{remote_root}' does not end with '/' which may lead to unexpected behavior. Adding '/' to the end."
+            )
+            self.remote_root = remote_root + "/"
 
         assert not (include_only and exclude_from), (
             "Cannot specify both include_only and exclude_from files."

@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 from slurm_executor import Pipeline
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.ComposeSbatchScript import SendSbatchScript
+from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspace
-from slurm_executor.pipeline.SerializeCall import (
+from slurm_executor.pipeline.SendCall import (
     SendCall,
 )
 from slurm_executor.pipeline.SubmitSbatchScript import SubmitSbatchScript

@@ -1,8 +1,14 @@
+import importlib.resources as pkg_resources
+
 import jinja2
 
 from slurm_executor.models.RsyncDirection import RsyncDirection
 
-with open("src/slurm_executor/synchronizer/rsync_command.jinja") as f:
+with (
+    pkg_resources.files("slurm_executor.templates")
+    .joinpath("rsync_command.jinja")
+    .open("r") as f
+):
     RSYNC_TEMPLATE = jinja2.Template(f.read())
 
 
