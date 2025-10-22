@@ -6,6 +6,9 @@ import jinja2
 
 from slurm_executor.models.Context import Context
 from slurm_executor.models.Step import Step
+from slurm_executor.pipeline.append_path_slash_if_missing import (
+    append_path_slash_if_missing,
+)
 from slurm_executor.pipeline.compose_rsync_command import compose_rsync_command
 
 with (
@@ -72,7 +75,9 @@ class SendSbatchScript(Step):
 
             conn = ctx._connection
 
-            remote_sbatch_location = workspace_location + "/" + job_script_name
+            remote_sbatch_location = (
+                append_path_slash_if_missing(workspace_location) + job_script_name
+            )
 
             conn.local(  # pyright: ignore[reportUnknownMemberType]
                 compose_rsync_command(
