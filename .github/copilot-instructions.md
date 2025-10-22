@@ -110,3 +110,7 @@ ls /directory > /dev/null && test -f /path/to/file && echo 'exists' || echo 'not
 - `src/slurm_executor/pipeline/Pipeline.py` - Core pipeline orchestration
 - `src/slurm_executor/executor/sbatch_script.jinja` - SLURM job template
 - `src/slurm_executor/models/Context.py` - State management
+
+## Writing tests
+
+Tests are located in the `src/slurm_executor/tests/` directory. Use `pytest` to run tests.
