@@ -3,16 +3,16 @@ import os
 
 from dotenv import load_dotenv
 
-from slurm_executor import Pipeline
-from slurm_executor.hooks.CancelJobOnFailure import CancelJobHook
-from slurm_executor.models.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.RSyncWorkspace import RSyncWorkspace
-from slurm_executor.pipeline.SendCall import (
+from slurm_executor import (
+    ConnectionConfig,
+    Pipeline,
+    RSyncWorkspace,
     SendCall,
+    SendSbatchScript,
+    SubmitSbatchScript,
+    WaitForJobCompletion,
 )
-from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
-from slurm_executor.pipeline.SubmitSbatchScript import SubmitSbatchScript
-from slurm_executor.pipeline.WaitForJobCompletion import WaitForJobCompletion
+from slurm_executor.hooks import CancelJobHook
 
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
