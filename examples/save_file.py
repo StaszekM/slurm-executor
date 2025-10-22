@@ -6,13 +6,15 @@ from dotenv import load_dotenv
 
 from slurm_executor import Pipeline
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspace
 from slurm_executor.pipeline.SendCall import (
     SendCall,
 )
+from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.SubmitSbatchScript import SubmitSbatchScript
 from slurm_executor.pipeline.WaitForJobCompletion import WaitForJobCompletion
+
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
@@ -69,5 +71,4 @@ def save_to_file(filename: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     save_to_file("./outputs/file.txt")

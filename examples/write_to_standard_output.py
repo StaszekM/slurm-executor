@@ -5,14 +5,15 @@ from dotenv import load_dotenv
 
 from slurm_executor import Pipeline
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
-from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.RSyncWorkspaceToRemote import RSyncWorkspace
 from slurm_executor.pipeline.SendCall import (
     SendCall,
 )
+from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.pipeline.SubmitSbatchScript import SubmitSbatchScript
 from slurm_executor.pipeline.WaitForJobCompletion import WaitForJobCompletion
 
+logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
 remote = os.getenv("SLURM_REMOTE")
@@ -28,7 +29,7 @@ assert cpu_partition
 pipeline = Pipeline(
     steps=[
         RSyncWorkspace(
-            local_root=".",
+            local_root="./",
             remote_root=f"/home/{user}/remote_job/",
             exclude_from="rsync-exclude.txt",
             direction="to_remote",
@@ -55,5 +56,4 @@ def write_to_standard_output(text: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     write_to_standard_output("Hello!")
