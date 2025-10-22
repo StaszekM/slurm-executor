@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from slurm_executor import Pipeline
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
+from slurm_executor.pipeline.ExecuteCommand import ExecuteCommand
 from slurm_executor.pipeline.RSyncWorkspace import RSyncWorkspace
 from slurm_executor.pipeline.SendCall import (
     SendCall,
@@ -43,6 +44,7 @@ pipeline = Pipeline(
         ),
         SubmitSbatchScript(output_file_location=f"/home/{user}/remote_job/job.out"),
         WaitForJobCompletion(poll_interval_ms=1000),
+        ExecuteCommand(remote_command=f"/home/{user}/remote_job/"),
         RSyncWorkspace(
             local_root="./",
             remote_root=f"/home/{user}/remote_job/",
