@@ -1,3 +1,4 @@
+import logging
 import threading
 import time
 from typing import Any, Dict
@@ -8,6 +9,8 @@ from slurm_executor.slurm_cli.get_job_state import get_job_state
 from slurm_executor.slurm_cli.get_job_stdout_path import get_job_stdout_path
 from slurm_executor.slurm_cli.verify_file_availability import verify_file_availability
 from slurm_executor.utils.tail_remote_file import tail_remote_file
+
+logger = logging.getLogger(__name__)
 
 
 class WaitForJobCompletion(Step):
@@ -50,9 +53,7 @@ class WaitForJobCompletion(Step):
                     conn, remote_workspace_path, output_file
                 )
                 if output_file_detected:
-                    print(
-                        f"[monitor] job {job_id} output file detected at {output_file}"
-                    )
+                    logger.info(f"Job {job_id} output file detected at {output_file}")
                     stop_event = threading.Event()
                     t = threading.Thread(
                         target=tail_remote_file,
@@ -71,7 +72,7 @@ class WaitForJobCompletion(Step):
             state = get_job_state(conn, job_id)
 
             if state != prev_state:
-                print(f"[monitor] job {job_id} state changed: {prev_state} -> {state}")
+                logger.info(f"Job {job_id} state changed: {prev_state} -> {state}")
             elif prev_state == "PENDING":
                 print(".", end="", flush=True)
             if state in {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"}:
