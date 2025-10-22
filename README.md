@@ -1,6 +1,6 @@
 
 > [!WARNING]  
->This project is under heavy development and may contain a ton of bugs!
+>This project is under heavy development and it is in very early stage. It may contain a ton of bugs!
 
 # A library for transparent execution of heavy Python jobs on SLURM!
 
