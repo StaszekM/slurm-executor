@@ -85,9 +85,7 @@ class TestRSyncWorkspace:
     def test_initialization_adds_trailing_slash_to_paths(self):
         """Test that initialization adds trailing slashes to paths."""
         # Arrange & Act
-        with patch(
-            "slurm_executor.pipeline.RSyncWorkspace.logger"
-        ) as mock_logger:
+        with patch("slurm_executor.pipeline.RSyncWorkspace.logger") as mock_logger:
             step = RSyncWorkspace(
                 local_root="/local",  # No trailing slash
                 remote_root="/remote",  # No trailing slash
@@ -114,9 +112,7 @@ class TestRSyncWorkspace:
     def test_initialization_preserves_trailing_slashes(self):
         """Test that initialization preserves existing trailing slashes."""
         # Arrange & Act
-        with patch(
-            "slurm_executor.pipeline.RSyncWorkspace.logger"
-        ) as mock_logger:
+        with patch("slurm_executor.pipeline.RSyncWorkspace.logger") as mock_logger:
             step = RSyncWorkspace(
                 local_root="/local/",
                 remote_root="/remote/",
@@ -130,7 +126,7 @@ class TestRSyncWorkspace:
         assert mock_logger.warning.call_count == 0
 
     def test_initialization_fails_with_both_include_and_exclude(self):
-        """Test initialization fails when both include_only and exclude_from are provided."""
+        """Test initialization fails when both include_only and exclude_from are provided."""  # noqa: E501
         # Arrange, Act & Assert
         error_msg = "Cannot specify both include_only and exclude_from files"
         with pytest.raises(AssertionError, match=error_msg):
@@ -143,7 +139,7 @@ class TestRSyncWorkspace:
             )
 
     def test_initialization_fails_with_neither_include_nor_exclude(self):
-        """Test initialization fails when neither include_only nor exclude_from are provided."""
+        """Test initialization fails when neither include_only nor exclude_from are provided."""  # noqa: E501
         # Arrange, Act & Assert
         error_msg = "Must specify either include_only or exclude_from file"
         with pytest.raises(AssertionError, match=error_msg):
@@ -309,9 +305,7 @@ class TestRSyncWorkspace:
         base_context.connection_config.user = "custom-user"
         base_context.connection_config.port = 9999
 
-        mock_module = (
-            "slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command"
-        )
+        mock_module = "slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command"
         with patch(mock_module) as mock_compose_rsync:
             mock_compose_rsync.return_value = "rsync command"
 

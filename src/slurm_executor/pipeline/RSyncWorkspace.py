@@ -32,12 +32,12 @@ class RSyncWorkspace(Step):
 
         if not local_root.endswith("/"):
             logger.warning(
-                f"Local root '{local_root}' does not end with '/' which may lead to unexpected behavior. Adding '/' to the end."
+                f"Local root '{local_root}' does not end with '/' which may lead to unexpected behavior. Adding '/' to the end."  # noqa: E501
             )
             self.local_root = local_root + "/"
         if not remote_root.endswith("/"):
             logger.warning(
-                f"Remote root '{remote_root}' does not end with '/' which may lead to unexpected behavior. Adding '/' to the end."
+                f"Remote root '{remote_root}' does not end with '/' which may lead to unexpected behavior. Adding '/' to the end."  # noqa: E501
             )
             self.remote_root = remote_root + "/"
 
