@@ -87,7 +87,7 @@ class TestSlurmClusterSmoke:
                 "exec",
                 slurm_cluster,
                 "sbatch",
-                "--wrap=echo 'Job output' > /test-workspace/outputs/job_created_file.txt",
+                "--wrap=echo 'Job output' > /test-workspace/outputs/job_created_file.txt",  # noqa: E501
                 "--wait",
             ],
             capture_output=True,

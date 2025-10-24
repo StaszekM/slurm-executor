@@ -77,7 +77,7 @@ def slurm_cluster():
 
         if not expected_services.issubset(set(running_services)):
             raise RuntimeError(
-                f"Not all services are running. Expected: {expected_services}, Running: {running_services}"
+                f"Not all services are running. Expected: {expected_services}, Running: {running_services}"  # noqa: E501
             )
 
         # Register cluster with SlurmDBD
