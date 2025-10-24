@@ -109,6 +109,16 @@ def slurm_cluster():
         yield "slurmctld-test"
 
     finally:
+        # Collect logs before cleanup if in CI environment
+        if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
+            print("\n📋 Collecting container logs for CI...")
+            try:
+                subprocess.run(
+                    ["make", "collect-logs"], cwd=str(compose_file.parent), check=False
+                )
+            except Exception as e:
+                print(f"Warning: Failed to collect logs: {e}")
+
         print("\n🧹 Cleaning up SLURM Docker cluster...")
         subprocess.run(
             [
