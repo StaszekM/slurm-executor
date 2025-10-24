@@ -273,8 +273,8 @@ class TestExecuteCommand:
 
         # Assert
         assert callback_result is mock_result
-        assert callback_result.stdout == "test\n"
-        assert callback_result.return_code == 0
+        assert callback_result.stdout == "test\n"  # type: ignore[attr-defined]
+        assert callback_result.return_code == 0  # type: ignore[attr-defined]
 
     def test_callback_exception_handling(self, base_context):
         """Test behavior when callback raises an exception."""

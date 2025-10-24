@@ -1,0 +1,3 @@
+[submodule "tests/vendor/slurm-docker-cluster"]
+	path = tests/vendor/slurm-docker-cluster
+	url = https://github.com/StaszekM/slurm-docker-cluster.git

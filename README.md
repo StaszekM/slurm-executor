@@ -2,6 +2,8 @@
 > [!WARNING]  
 >This project is under heavy development and it is in very early stage. It may contain a ton of bugs!
 
+![Slurm Executor robot](doc/executor_robot.png)
+
 # A library for transparent execution of heavy Python jobs on SLURM!
 
 Imagine being able to offload **any**\* Python function to a HPC cluster with just few lines of code!

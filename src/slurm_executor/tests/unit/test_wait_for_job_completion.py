@@ -323,7 +323,7 @@ class TestWaitForJobCompletion:
             mock_run.side_effect = side_effect
 
             # Act
-            result = step.run(base_context)
+            step.run(base_context)
 
             # This test verifies the structure exists, actual implementation
             # would require more complex mocking of the threading behavior
