@@ -47,43 +47,37 @@ executor.run()
 EOF
 """
 
-    @patch("slurm_executor.cli.commands.init.get_git_root")
-    @patch("slurm_executor.cli.commands.init.pkg_resources")
-    @patch("builtins.open", new_callable=mock_open)
     def test_run_init_creates_template_file_when_not_exists(
         self,
-        mock_file_open,
-        mock_pkg_resources,
-        mock_get_git_root,
-        mock_git_root,
-        template_content,
+        app_repo,
         capsys,
+        monkeypatch,
     ):
         """Test that run_init creates template file when it doesn't exist."""
-        # Arrange
-        mock_get_git_root.return_value = mock_git_root
+        # Arrange - change to the git repo directory
+        git_root = Path(app_repo.workspace)
+        monkeypatch.chdir(git_root)
 
-        # Mock the template file reading using mock_open context manager
-        template_mock = mock_open(read_data=template_content)
-        mock_pkg_resources.files.return_value.joinpath.return_value.open = template_mock
+        destination_file = git_root / "sbatch_script.jinja"
 
-        destination_file = mock_git_root / "sbatch_script.jinja"
+        # Ensure the destination file doesn't exist initially
+        assert not destination_file.exists()
 
-        # Mock that file doesn't exist
-        with patch.object(Path, "exists", return_value=False):
-            # Act
-            run_init(force=False)
+        # Act
+        run_init(force=False)
 
         # Assert
-        mock_get_git_root.assert_called_once()
-        mock_pkg_resources.files.assert_called_once_with("slurm_executor.templates")
-        mock_pkg_resources.files.return_value.joinpath.assert_called_once_with(
-            "basic_sbatch_template.jinja"
-        )
+        # Verify the file was created
+        assert destination_file.exists()
 
-        # Verify file was written with correct content
-        mock_file_open.assert_called_once_with(destination_file, "w")
-        mock_file_open().write.assert_called_once_with(template_content)
+        # Verify the file content contains expected SLURM directives
+        content = destination_file.read_text()
+        assert "#!/bin/bash" in content
+        assert "#SBATCH --partition={{partition}}" in content
+        assert "#SBATCH --time={{time}}" in content
+        assert "CloudpickleExecutor" in content
+        assert "{{remote_call_location}}" in content
+        assert "uv sync" in content
 
         # Verify output messages
         captured = capsys.readouterr()
