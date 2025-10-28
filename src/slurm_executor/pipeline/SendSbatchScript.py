@@ -1,7 +1,10 @@
+import inspect
 import pathlib
 import tempfile
+from typing import Set
 
 import jinja2
+from jinja2 import Environment, meta
 
 from slurm_executor.models.Context import Context
 from slurm_executor.models.Step import Step
@@ -9,6 +12,27 @@ from slurm_executor.utils.append_path_slash_if_missing import (
     append_path_slash_if_missing,
 )
 from slurm_executor.utils.compose_rsync_command import compose_rsync_command
+
+
+def get_template_undeclared_variables(template_content_string: str) -> Set[str]:
+    """Get undeclared variables in a Jinja2 template. Undeclared variables are those
+    that are used in the template but not defined within it.
+
+    Parameters
+    ----------
+    template_content_string : str
+        The content of the Jinja2 template as a string.
+
+    Returns
+    -------
+    Set[str]
+        A set of undeclared variable names found in the template.
+    """
+    env = Environment()
+    parsed_content = env.parse(template_content_string)
+
+    undeclared = meta.find_undeclared_variables(parsed_content)
+    return undeclared
 
 
 class SendSbatchScript(Step):
@@ -29,11 +53,51 @@ class SendSbatchScript(Step):
 
         if not pathlib.Path(sbatch_script_template_location).is_file():
             raise FileNotFoundError(
-                f"SBATCH script template file not found at {sbatch_script_template_location}."
+                f"SBATCH script template file not found at \
+{sbatch_script_template_location}."
             )
 
         with open(sbatch_script_template_location, "r") as f:
-            self.sbatch_template = jinja2.Template(f.read())
+            sbatch_template_file_contents = f.read()
+
+        sig = inspect.signature(SendSbatchScript.compose_sbatch_script)
+        required_kwargs = [
+            name
+            for name, param in sig.parameters.items()
+            if param.default is param.empty and param.kind == param.KEYWORD_ONLY
+        ]
+        self.required_variables = set(required_kwargs)
+
+        self._validate_template_variables(sbatch_template_file_contents)
+
+        self.sbatch_template = jinja2.Template(sbatch_template_file_contents)
+
+    def _validate_template_variables(self, sbatch_template_file_contents: str) -> None:
+        undeclared_variables = get_template_undeclared_variables(
+            sbatch_template_file_contents
+        )
+
+        missing_variables = self.required_variables - undeclared_variables
+        unexpected_variables = undeclared_variables - self.required_variables
+
+        if unexpected_variables and missing_variables:
+            raise ValueError(
+                f"The SBATCH script template is missing required variables: \
+{', '.join(missing_variables)} and contains unexpected variables: \
+{', '.join(unexpected_variables)}."
+            )
+
+        if missing_variables:
+            raise ValueError(
+                f"The SBATCH script template is missing required variables: \
+{', '.join(missing_variables)}."
+            )
+
+        if unexpected_variables:
+            raise ValueError(
+                f"The SBATCH script template contains unexpected variables: \
+{', '.join(unexpected_variables)}."
+            )
 
     def run(self, ctx: Context):
         conn = ctx._connection
@@ -85,6 +149,7 @@ class SendSbatchScript(Step):
 
     def compose_sbatch_script(
         self,
+        *,
         partition: str,
         time: str,
         workspace_location: str,

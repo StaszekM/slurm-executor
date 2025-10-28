@@ -1,5 +1,6 @@
 """Unit tests for SendSbatchScript step."""
 
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
@@ -11,6 +12,7 @@ from slurm_executor.models.Context import Context
 from slurm_executor.pipeline.SendSbatchScript import (
     SendSbatchScript,
 )
+from slurm_executor.utils.both_present import both_present
 
 
 class TestSendSbatchScript:
@@ -238,9 +240,28 @@ class TestSendSbatchScript:
 
         # Act & Assert
         with pytest.raises(
-            Exception, match=r"missing (\d+) required positional argument"
+            Exception, match=r"got an unexpected keyword argument 'base_context'"
         ):
-            step.compose_sbatch_script(base_context)  # type: ignore
+            step.compose_sbatch_script(base_context=base_context)  # type: ignore
+
+    def test_run_blocks_positional_arguments(
+        self,
+        base_context,
+        sbatch_script_location,
+    ):
+        """Test if run method blocks positional arguments."""
+        # Arrange
+        step = SendSbatchScript(
+            partition="cpu",
+            time="01:00:00",
+            sbatch_script_template_location=sbatch_script_location,
+        )
+
+        # Act & Assert
+        with pytest.raises(
+            Exception, match=r"takes 1 positional argument but (\d+) were given"
+        ):
+            step.compose_sbatch_script(base_context, 1)  # type: ignore
 
     @patch("slurm_executor.pipeline.SendSbatchScript.compose_rsync_command")
     @patch("slurm_executor.pipeline.SendSbatchScript.tempfile.TemporaryDirectory")
@@ -375,4 +396,80 @@ class TestSendSbatchScript:
                 partition="cpu",
                 time="01:00:00",
                 sbatch_script_template_location=missing_template_path,
+            )
+
+    def test_missing_required_variables_in_template(self, tmp_path):
+        """Test initialization failure with missing required variables in template."""
+        # Arrange
+        incomplete_template_path = tmp_path / "incomplete_template.jinja"
+        incomplete_template_content = """#!/bin/bash
+#SBATCH --partition={{ partition }}
+#SBATCH --time={{ time }}
+echo "Workspace: {{ workspace_location }}"
+"""
+        incomplete_template_path.write_text(incomplete_template_content)
+
+        # Act & Assert
+        with pytest.raises(
+            ValueError,
+            match=r"template(.*)missing required variables: remote_call_location",
+        ):
+            SendSbatchScript(
+                partition="cpu",
+                time="01:00:00",
+                sbatch_script_template_location=str(incomplete_template_path),
+            )
+
+    def test_unexpected_variables_in_template(self, tmp_path):
+        """Test initialization failure with unexpected variables in template."""
+        # Arrange
+        unexpected_template_path = tmp_path / "unexpected_template.jinja"
+        unexpected_template_content = """#!/bin/bash
+#SBATCH --partition={{ partition }}
+#SBATCH --time={{ time }}
+echo "Workspace: {{ workspace_location }}"
+
+echo "Extra: {{ unexpected_variable }}"
+
+echo "Call: {{ remote_call_location }}"
+"""
+        unexpected_template_path.write_text(unexpected_template_content)
+
+        # Act & Assert
+        with pytest.raises(
+            ValueError,
+            match=r"template(.*)unexpected variables: unexpected_variable",
+        ):
+            SendSbatchScript(
+                partition="cpu",
+                time="01:00:00",
+                sbatch_script_template_location=str(unexpected_template_path),
+            )
+
+    def test_both_missing_and_unexpected_variables(self, tmp_path):
+        """Test initialization failure with both unexpected and missing
+        variables in template."""
+        # Arrange
+        unexpected_template_path = tmp_path / "unexpected_template.jinja"
+        unexpected_template_content = """#!/bin/bash
+#SBATCH --partition={{ partition }}
+#SBATCH --time={{ time }}
+echo "Workspace: {{ workspace_location }}"
+
+echo "Extra: {{ unexpected_variable }}"
+"""
+        unexpected_template_path.write_text(unexpected_template_content)
+
+        # Act & Assert
+        with pytest.raises(
+            ValueError,
+            match=both_present(
+                re.compile(r"unexpected variables: unexpected_variable"),
+                re.compile(r"missing required variables: remote_call_location"),
+            ),
+        ):
+            SendSbatchScript(
+                partition="cpu",
+                time="01:00:00",
+                sbatch_script_template_location=str(unexpected_template_path),
             )
