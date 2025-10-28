@@ -28,9 +28,35 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build slurm-docker-cluster image
+      - name: Load environment variables
         working-directory: tests/e2e
-        run: make build
+        run: |
+          # Load environment variables from .env.test
+          set -a
+          source .env.test
+          set +a
+          echo "SLURM_TAG=${SLURM_TAG}" >> $GITHUB_ENV
+          echo "SLURM_VERSION=${SLURM_VERSION}" >> $GITHUB_ENV
+
+      - name: Build slurm-docker-cluster image with cache
+        working-directory: tests/e2e
+        run: |
+          # Build the Docker image with GitHub Actions cache
+          # Use scoped cache for better cache key management
+          echo "🏗️ Building SLURM Docker image: slurm-docker-cluster:${SLURM_VERSION}"
+          echo "Using SLURM_TAG: ${SLURM_TAG}"
+          
+          docker buildx build \
+            --cache-from type=gha,scope=slurm-docker-cluster \
+            --cache-to type=gha,mode=max,scope=slurm-docker-cluster \
+            --build-arg SLURM_TAG=${SLURM_TAG} \
+            --tag slurm-docker-cluster:${SLURM_VERSION} \
+            --progress=plain \
+            --load \
+            ../vendor/slurm-docker-cluster/
+          
+          echo "✅ Docker image built successfully"
+          docker images | grep slurm-docker-cluster
       
       - name: Run E2E smoke tests
         working-directory: tests/e2e
