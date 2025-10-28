@@ -1,4 +1,3 @@
-import importlib.resources as pkg_resources
 import pathlib
 import tempfile
 
@@ -11,24 +10,6 @@ from slurm_executor.utils.append_path_slash_if_missing import (
 )
 from slurm_executor.utils.compose_rsync_command import compose_rsync_command
 
-with (
-    pkg_resources.files("slurm_executor.templates")
-    .joinpath("sbatch_script.jinja")
-    .open("r") as f
-):
-    SBATCH_TEMPLATE = jinja2.Template(f.read())
-
-
-def compose_sbatch_script(
-    partition: str, time: str, workspace_location: str, remote_call_location: str
-) -> str:
-    return SBATCH_TEMPLATE.render(
-        partition=partition,
-        time=time,
-        workspace_location=workspace_location,
-        remote_call_location=remote_call_location,
-    )
-
 
 class SendSbatchScript(Step):
     @property
@@ -40,13 +21,19 @@ class SendSbatchScript(Step):
         return ["remote_workspace_path", "remote_call_path"]
 
     def __init__(
-        self,
-        partition: str,
-        time: str,
+        self, partition: str, time: str, sbatch_script_template_location: str
     ) -> None:
         super().__init__()
         self.partition = partition
         self.time = time
+
+        if not pathlib.Path(sbatch_script_template_location).is_file():
+            raise FileNotFoundError(
+                f"SBATCH script template file not found at {sbatch_script_template_location}."
+            )
+
+        with open(sbatch_script_template_location, "r") as f:
+            self.sbatch_template = jinja2.Template(f.read())
 
     def run(self, ctx: Context):
         conn = ctx._connection
@@ -60,7 +47,7 @@ class SendSbatchScript(Step):
             f"Remote call location must be set in context before executing \
 {type(self).__name__}."
         )
-        composed_file_contents = compose_sbatch_script(
+        composed_file_contents = self.compose_sbatch_script(
             partition=self.partition,
             time=self.time,
             workspace_location=workspace_location,
@@ -95,3 +82,17 @@ class SendSbatchScript(Step):
             ctx.remote_sbatch_path = remote_sbatch_location
 
         return ctx
+
+    def compose_sbatch_script(
+        self,
+        partition: str,
+        time: str,
+        workspace_location: str,
+        remote_call_location: str,
+    ) -> str:
+        return self.sbatch_template.render(
+            partition=partition,
+            time=time,
+            workspace_location=workspace_location,
+            remote_call_location=remote_call_location,
+        )
