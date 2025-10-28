@@ -257,7 +257,7 @@ EOF
             run_init(force=False)
 
         # Assert
-        # Verify that Path(__file__) was called to get the CLI location
-        mock_path_class.assert_called_once()
+        # Verify that Path.cwd() was called to get the CLI location
+        mock_path_class.cwd.assert_called_once()
         # Verify that get_git_root was called with the CLI location
-        mock_get_git_root.assert_called_once_with(mock_cli_location)
+        mock_get_git_root.assert_called_once_with(mock_path_class.cwd())

@@ -7,9 +7,7 @@ from slurm_executor.utils import get_git_root
 
 
 def run_init(force: bool):
-    cli_location = Path(__file__)
-
-    git_root = get_git_root(cli_location)
+    git_root = get_git_root(Path.cwd())
 
     with (
         pkg_resources.files("slurm_executor.templates")
