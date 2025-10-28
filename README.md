@@ -32,6 +32,7 @@ pipeline = Pipeline(
         SendSbatchScript(
             partition=cpu_partition,
             time="00:05:00",
+            sbatch_script_template_location="sbatch_script.jinja",
         ),
         SubmitSbatchScript(output_file_location=f"/home/{user}/remote_job/job.out"),
         WaitForJobCompletion(poll_interval_ms=1000),

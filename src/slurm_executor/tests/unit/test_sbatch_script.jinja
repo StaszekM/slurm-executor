@@ -1,0 +1,10 @@
+#!/bin/bash
+#SBATCH --partition={{partition}}
+#SBATCH --time={{time}}
+
+# test script
+
+set -e
+cd {{workspace_location}}
+
+# executing {{remote_call_location}}

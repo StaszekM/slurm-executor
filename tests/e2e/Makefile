@@ -24,7 +24,7 @@ test: build
 	uv run python -m pytest -v
 
 # Run smoke tests only
-test-smoke: build
+test-smoke:
 	@echo "💨 Running smoke tests..."
 	uv run python -m pytest -v -m smoke
 

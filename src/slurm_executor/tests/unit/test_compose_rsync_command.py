@@ -9,7 +9,8 @@ class TestComposeRsyncCommand:
     """Test suite for compose_rsync_command function."""
 
     def test_compose_rsync_command_to_remote_with_exclusion(self):
-        """Test rsync command composition for to_remote with exclusion file."""
+        """Test rsync command composition for to_remote with exclusion file,
+        no order required."""
         # Arrange
         port = 22
         user = "testuser"
@@ -44,7 +45,8 @@ class TestComposeRsyncCommand:
             assert part in result
 
     def test_compose_rsync_command_from_remote_with_inclusion(self):
-        """Test rsync command composition for from_remote with inclusion file."""
+        """Test rsync command composition for from_remote with inclusion file,
+        no order required."""
         # Arrange
         port = 2222
         user = "remoteuser"
