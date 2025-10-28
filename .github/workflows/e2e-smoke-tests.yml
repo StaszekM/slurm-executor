@@ -38,25 +38,40 @@ jobs:
           echo "SLURM_TAG=${SLURM_TAG}" >> $GITHUB_ENV
           echo "SLURM_VERSION=${SLURM_VERSION}" >> $GITHUB_ENV
 
+      # Use actions/cache for Docker layers as workaround for load+gha cache issue
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-slurm-${{ env.SLURM_TAG }}-${{ hashFiles('tests/vendor/slurm-docker-cluster/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-slurm-${{ env.SLURM_TAG }}-
+            ${{ runner.os }}-buildx-slurm-
+
       - name: Build slurm-docker-cluster image with cache
-        working-directory: tests/e2e
+        uses: docker/build-push-action@v5
+        with:
+          context: tests/vendor/slurm-docker-cluster
+          file: tests/vendor/slurm-docker-cluster/Dockerfile
+          build-args: |
+            SLURM_TAG=${{ env.SLURM_TAG }}
+          tags: slurm-docker-cluster:${{ env.SLURM_VERSION }}
+          load: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # Temp fix for actions/cache buildx cache size issue
+      # https://github.com/docker/build-push-action/issues/252
+      - name: Move cache
         run: |
-          # Build the Docker image with GitHub Actions cache
-          # Use scoped cache for better cache key management
-          echo "🏗️ Building SLURM Docker image: slurm-docker-cluster:${SLURM_VERSION}"
-          echo "Using SLURM_TAG: ${SLURM_TAG}"
-          
-          docker buildx build \
-            --cache-from type=gha,scope=slurm-docker-cluster \
-            --cache-to type=gha,mode=max,scope=slurm-docker-cluster \
-            --build-arg SLURM_TAG=${SLURM_TAG} \
-            --tag slurm-docker-cluster:${SLURM_VERSION} \
-            --progress=plain \
-            --load \
-            ../vendor/slurm-docker-cluster/
-          
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Verify Docker image
+        run: |
           echo "✅ Docker image built successfully"
           docker images | grep slurm-docker-cluster
+          echo "Image size: $(docker images slurm-docker-cluster:${{ env.SLURM_VERSION }} --format 'table {{.Size}}')"
       
       - name: Run E2E smoke tests
         working-directory: tests/e2e
