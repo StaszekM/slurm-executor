@@ -295,6 +295,15 @@ wheels = [
 ]
 
 [[package]]
+name = "execnet"
+version = "2.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/ff/b4c0dc78fbe20c3e59c0c7334de0c27eb4001a2b2017999af398bf730817/execnet-2.1.1.tar.gz", hash = "sha256:5189b52c6121c24feae288166ab41b32549c7e2348652736540b9e6e7d4e72e3", size = 166524, upload-time = "2024-04-08T09:04:19.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/09/2aea36ff60d16dd8879bdb2f5b3ee0ba8d08cbbdcdfe870e695ce3784385/execnet-2.1.1-py3-none-any.whl", hash = "sha256:26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc", size = 40612, upload-time = "2024-04-08T09:04:17.414Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -901,6 +910,20 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-git"
+version = "1.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "gitpython" },
+    { name = "pytest" },
+    { name = "pytest-shutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/22/74/8a237956bebbad3b1c84de5939c9d19fa82894622fa4df62d75ffa978165/pytest-git-1.8.0.tar.gz", hash = "sha256:e828ad716241f6485efda805aade5a17a034c720070a7121668155e6e706b415", size = 8754, upload-time = "2024-10-17T15:50:48.414Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/2c/21172aba6939986589c56923fc5c274f76ec274b73e6a9b34799a3d6633e/pytest_git-1.8.0-py3-none-any.whl", hash = "sha256:39f0b7ac64a0d4043a7f5a2f23a6ed9304139ca150c53efa525151940cd49b48", size = 6958, upload-time = "2024-10-17T15:50:32.251Z" },
+]
+
+[[package]]
 name = "pytest-mock"
 version = "3.15.1"
 source = { registry = "https://pypi.org/simple" }
@@ -910,6 +933,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
+name = "pytest-shutil"
+version = "1.8.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "execnet" },
+    { name = "pytest" },
+    { name = "six" },
+    { name = "termcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a0/8d/5a60eeced74608fd2304dafc9e26815988714f8a2cfa72da99c8c3c85515/pytest-shutil-1.8.1.tar.gz", hash = "sha256:7dcc02e8a372098d51a98737e7f662e6edfd75cec7070a11e904141de49d866b", size = 37554, upload-time = "2024-11-29T19:34:17.066Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b2/17/1b161657385982134b723dcd463483d498e54e286c5632d42602407e606f/pytest_shutil-1.8.1-py3-none-any.whl", hash = "sha256:0793e347e07b9296d814ce33377ed348ce376ffac76c0e57b28bf84235499f51", size = 15948, upload-time = "2024-11-29T19:33:26.349Z" },
 ]
 
 [[package]]
@@ -1102,6 +1140,7 @@ dev = [
     { name = "ipykernel" },
     { name = "numpy" },
     { name = "pytest" },
+    { name = "pytest-git" },
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
@@ -1126,6 +1165,7 @@ dev = [
     { name = "ipykernel", specifier = ">=7.0.1" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-git", specifier = ">=1.8.0" },
     { name = "pytest-mock", specifier = ">=3.12.0" },
     { name = "ruff", specifier = ">=0.14.0" },
 ]
@@ -1151,6 +1191,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/e3/55dcc2cfbc3ca9c29519eb6884dd1415ecb53b0e934862d3559ddcb7e20b/stack_data-0.6.3.tar.gz", hash = "sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9", size = 44707, upload-time = "2023-09-30T13:58:05.479Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/7b/ce1eafaf1a76852e2ec9b22edecf1daa58175c090266e9f6c64afcd81d91/stack_data-0.6.3-py3-none-any.whl", hash = "sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695", size = 24521, upload-time = "2023-09-30T13:58:03.53Z" },
+]
+
+[[package]]
+name = "termcolor"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/56/ab275c2b56a5e2342568838f0d5e3e66a32354adcc159b495e374cda43f5/termcolor-3.2.0.tar.gz", hash = "sha256:610e6456feec42c4bcd28934a8c87a06c3fa28b01561d46aa09a9881b8622c58", size = 14423, upload-time = "2025-10-25T19:11:42.586Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/d5/141f53d7c1eb2a80e6d3e9a390228c3222c27705cbe7f048d3623053f3ca/termcolor-3.2.0-py3-none-any.whl", hash = "sha256:a10343879eba4da819353c55cb8049b0933890c2ebf9ad5d3ecd2bb32ea96ea6", size = 7698, upload-time = "2025-10-25T19:11:41.536Z" },
 ]
 
 [[package]]

@@ -16,6 +16,22 @@ class TestRunInit:
         return Path("/mock/git/root")
 
     @pytest.fixture
+    def app_repo(self, git_repo):
+        path = git_repo.workspace
+        file = path / "hello.txt"
+        file.write_text("hello world!")
+
+        # We can run commands relative to the working directory
+        git_repo.run("git add hello.txt")
+
+        # It's better to use the GitPython api directly - the 'api' attribute is
+        # a handle to the repository object.
+
+        git_repo.api.index.commit("Initial commit")
+
+        return git_repo
+
+    @pytest.fixture
     def template_content(self):
         """Sample template content for testing."""
         return """#!/bin/bash
