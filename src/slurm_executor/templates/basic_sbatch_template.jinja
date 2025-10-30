@@ -1,0 +1,31 @@
+#!/bin/bash
+#SBATCH --partition={{partition}}
+#SBATCH --time={{time}}
+
+{######################################################## 
+This job script was created automatically by slurm-executor on repository initialization.
+You can modify it according to your needs.
+Below is an example how its structure may look like.
+
+You have access to following variables:
+- partition: The SLURM partition to submit the job to.
+- time: The maximum runtime for the job.
+- workspace_location: The local path to the workspace where the job will be executed.
+- remote_call_location: The remote location from which to deserialize the CloudpickleExecutor.
+##########################################################
+
+######### Example job script with using uv to install dependencies and run #########
+
+uv sync
+
+uv run - <<'EOF'
+from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
+import time
+
+executor = CloudpickleExecutor(
+    deserialize_from="{{remote_call_location}}"
+)
+    
+executor.run()
+EOF 
+#}
