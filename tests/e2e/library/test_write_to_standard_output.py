@@ -18,6 +18,20 @@ from pathlib import Path
 
 import pytest
 
+# Add library to path for imports
+REPO_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from slurm_executor import (
+    ConnectionConfig,
+    Pipeline,
+    RSyncWorkspace,
+    SendCall,
+    SendSbatchScript,
+    SubmitSbatchScript,
+    WaitForJobCompletion,
+)
+
 
 class TestWriteToStandardOutputHappyPath:
     """
@@ -57,18 +71,6 @@ class TestWriteToStandardOutputHappyPath:
         4. Function executes and writes to stdout
         5. Output is captured in job output file
         """
-        # Import the library components
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
-        from slurm_executor import (
-            ConnectionConfig,
-            Pipeline,
-            RSyncWorkspace,
-            SendCall,
-            SendSbatchScript,
-            SubmitSbatchScript,
-            WaitForJobCompletion,
-        )
-
         # Create working directory inside container
         remote_workspace = "/workspace/tests/e2e/fixtures/test-workspace/outputs/write_to_stdout_test"
 
@@ -99,9 +101,7 @@ class TestWriteToStandardOutputHappyPath:
                 SendSbatchScript(
                     partition=library_env["CPU_PARTITION"],
                     time="00:05:00",
-                    sbatch_script_template_location=str(
-                        Path(__file__).parent.parent.parent.parent.parent / "sbatch_script.jinja"
-                    ),
+                    sbatch_script_template_location=str(REPO_ROOT / "sbatch_script.jinja"),
                 ),
                 SubmitSbatchScript(output_file_location=f"{remote_workspace}/job.out"),
                 WaitForJobCompletion(poll_interval_ms=1000),
@@ -162,18 +162,6 @@ class TestWriteToStandardOutputHappyPath:
         2. Output order is preserved
         3. All messages appear in the output file
         """
-        # Import the library components
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
-        from slurm_executor import (
-            ConnectionConfig,
-            Pipeline,
-            RSyncWorkspace,
-            SendCall,
-            SendSbatchScript,
-            SubmitSbatchScript,
-            WaitForJobCompletion,
-        )
-
         # Create working directory
         remote_workspace = "/workspace/tests/e2e/fixtures/test-workspace/outputs/write_to_stdout_test"
 
@@ -191,9 +179,7 @@ class TestWriteToStandardOutputHappyPath:
                 SendSbatchScript(
                     partition=library_env["CPU_PARTITION"],
                     time="00:05:00",
-                    sbatch_script_template_location=str(
-                        Path(__file__).parent.parent.parent.parent.parent / "sbatch_script.jinja"
-                    ),
+                    sbatch_script_template_location=str(REPO_ROOT / "sbatch_script.jinja"),
                 ),
                 SubmitSbatchScript(output_file_location=f"{remote_workspace}/job_multi.out"),
                 WaitForJobCompletion(poll_interval_ms=1000),

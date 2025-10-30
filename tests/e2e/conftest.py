@@ -4,11 +4,16 @@ E2E Test Configuration and Fixtures for SLURM Docker Cluster Integration
 
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
+
+# Add src to path for safe_get_env utility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+from slurm_executor.utils import safe_get_env
 
 # Load test environment variables
 env_path = Path(__file__).parent / ".env.test"
@@ -166,10 +171,10 @@ def slurm_env():
         dict: Environment variables needed for SLURM connection
     """
     return {
-        "SLURM_REMOTE": os.getenv("SLURM_REMOTE", "slurmctld-test"),
-        "SLURM_PORT": os.getenv("SLURM_PORT", "22"),
-        "SLURM_USERNAME": os.getenv("SLURM_USERNAME", "root"),
-        "CPU_PARTITION": os.getenv("CPU_PARTITION", "normal"),
+        "SLURM_REMOTE": safe_get_env("SLURM_REMOTE", "Container hostname for SLURM cluster"),
+        "SLURM_PORT": safe_get_env("SLURM_PORT", "SSH port for SLURM connection"),
+        "SLURM_USERNAME": safe_get_env("SLURM_USERNAME", "Username for SLURM connection"),
+        "CPU_PARTITION": safe_get_env("CPU_PARTITION", "SLURM partition name"),
     }
 
 
@@ -266,9 +271,9 @@ def library_env(ssh_key):
         dict: Environment variables for library usage
     """
     return {
-        "SLURM_REMOTE": os.getenv("SLURM_REMOTE_SSH", "localhost"),
-        "SLURM_PORT": os.getenv("SLURM_PORT", "2222"),
-        "SLURM_USERNAME": os.getenv("SLURM_USERNAME", "root"),
-        "CPU_PARTITION": os.getenv("CPU_PARTITION", "normal"),
+        "SLURM_REMOTE": safe_get_env("SLURM_REMOTE_SSH", "SSH hostname for SLURM cluster (localhost for tests)"),
+        "SLURM_PORT": safe_get_env("SLURM_PORT", "SSH port for SLURM connection"),
+        "SLURM_USERNAME": safe_get_env("SLURM_USERNAME", "Username for SLURM SSH connection"),
+        "CPU_PARTITION": safe_get_env("CPU_PARTITION", "SLURM partition name"),
         "SSH_KEY_PATH": str(ssh_key),
     }

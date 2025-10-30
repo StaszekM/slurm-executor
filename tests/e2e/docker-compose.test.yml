@@ -34,10 +34,9 @@ services:
       - slurm-network-test
 
   slurmctld:
-    image: slurm-docker-cluster-ssh:${SLURM_VERSION}
+    image: slurm-docker-cluster:${SLURM_VERSION}
     build:
-      context: ..
-      dockerfile: e2e/Dockerfile.ssh
+      context: ../vendor/slurm-docker-cluster
       args:
         SLURM_TAG: ${SLURM_TAG}
     command: ["slurmctld"]
@@ -53,7 +52,7 @@ services:
       # Mount project root for library testing
       - ../../:/workspace
     ports:
-      - "2222:22"  # Expose SSH on host port 2222
+      - "2222:22"  # Expose SSH on host port 2222 (SSH server provided by subrepo)
     expose:
       - "6817"
     depends_on:
