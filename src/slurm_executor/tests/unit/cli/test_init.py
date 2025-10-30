@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+import slurm_executor.cli.commands.init
 from slurm_executor.cli.commands.init import run_init
 from slurm_executor.utils import get_git_root
 
@@ -210,18 +211,14 @@ EOF
         assert "uv sync" in content
 
     def test_run_init_uses_current_file_location_for_git_root(
-        self, app_repo, monkeypatch, capsys
+        self, app_repo, monkeypatch, mocker
     ):
         """Test that run_init uses the Path.cwd() when calling get_git_root"""
+        spy = mocker.spy(slurm_executor.cli.commands.init, "get_git_root")
         git_root = Path(app_repo.workspace)
         monkeypatch.chdir(git_root)
 
         # check that the run_init called Path.cwd()
-        with monkeypatch.context() as m:
-            mocked_cwd = git_root
-            m.setattr(Path, "cwd", lambda: mocked_cwd)
+        run_init(force=False)
 
-            run_init(force=False)
-
-        assert get_git_root.call_count == 1  # todo this is malfunctioning assertion
-        assert get_git_root.call_args[0][0] == mocked_cwd
+        spy.assert_called_once_with(Path.cwd())
