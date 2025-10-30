@@ -36,10 +36,10 @@ services:
   slurmctld:
     image: slurm-docker-cluster-ssh:${SLURM_VERSION}
     build:
-      context: .
-      dockerfile: Dockerfile.ssh
+      context: ..
+      dockerfile: e2e/Dockerfile.ssh
       args:
-        SLURM_VERSION: ${SLURM_VERSION}
+        SLURM_TAG: ${SLURM_TAG}
     command: ["slurmctld"]
     container_name: slurmctld-test
     hostname: slurmctld
