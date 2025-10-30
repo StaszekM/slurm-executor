@@ -131,7 +131,8 @@ EOF
         capsys,
         monkeypatch,
     ):
-        """Test that run_init shows warning and doesn't overwrite when file exists and force=False."""
+        """Test that run_init shows warning and doesn't overwrite
+        when file exists and force=False."""
         # Arrange
         git_root = Path(app_repo.workspace)
         monkeypatch.chdir(git_root)
@@ -157,7 +158,8 @@ EOF
         app_repo,
         monkeypatch,
     ):
-        """Test that get_git_root correctly identifies git root for destination file, when called from subfolder."""
+        """Test that get_git_root correctly identifies git root for destination file,
+        when called from subfolder."""
         # Arrange
         git_root = Path(app_repo.workspace)
         git_subdir = git_root / "subdir"
