@@ -1,0 +1,28 @@
+# Extends the base SLURM image with SSH server support
+# This allows the slurm-executor library to connect via SSH/Fabric
+
+ARG SLURM_VERSION=25.05.3
+FROM slurm-docker-cluster:${SLURM_VERSION}
+
+# Install OpenSSH server
+RUN yum -y install openssh-server openssh-clients \
+    && yum clean all \
+    && rm -rf /var/cache/yum
+
+# Configure SSH
+RUN ssh-keygen -A \
+    && mkdir -p /root/.ssh \
+    && chmod 700 /root/.ssh
+
+# Allow root login for testing
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+# Create startup script that runs both sshd and the original SLURM service
+COPY docker-entrypoint-ssh.sh /usr/local/bin/docker-entrypoint-ssh.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint-ssh.sh
+
+EXPOSE 22
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-ssh.sh"]
+CMD ["slurmctld"]

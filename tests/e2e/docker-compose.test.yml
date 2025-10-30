@@ -34,11 +34,12 @@ services:
       - slurm-network-test
 
   slurmctld:
-    image: slurm-docker-cluster:${SLURM_VERSION}
+    image: slurm-docker-cluster-ssh:${SLURM_VERSION}
     build:
-      context: ../vendor/slurm-docker-cluster
+      context: .
+      dockerfile: Dockerfile.ssh
       args:
-        SLURM_TAG: ${SLURM_TAG}
+        SLURM_VERSION: ${SLURM_VERSION}
     command: ["slurmctld"]
     container_name: slurmctld-test
     hostname: slurmctld
@@ -49,6 +50,10 @@ services:
       - var_log_slurm_test:/var/log/slurm
       - ../vendor/slurm-docker-cluster/cgroup.conf:/etc/slurm/cgroup.conf
       - ./fixtures/test-workspace:/test-workspace
+      # Mount project root for library testing
+      - ../../:/workspace
+    ports:
+      - "2222:22"  # Expose SSH on host port 2222
     expose:
       - "6817"
     depends_on:
@@ -72,6 +77,8 @@ services:
       - var_log_slurm_test:/var/log/slurm
       - ../vendor/slurm-docker-cluster/cgroup.conf:/etc/slurm/cgroup.conf
       - ./fixtures/test-workspace:/test-workspace
+      # Mount project root for library testing
+      - ../../:/workspace
     expose:
       - "6818"
     depends_on:
@@ -95,6 +102,8 @@ services:
       - var_log_slurm_test:/var/log/slurm
       - ../vendor/slurm-docker-cluster/cgroup.conf:/etc/slurm/cgroup.conf
       - ./fixtures/test-workspace:/test-workspace
+      # Mount project root for library testing
+      - ../../:/workspace
     expose:
       - "6818"
     depends_on:

@@ -192,3 +192,83 @@ def docker_exec():
         )
 
     return exec_command
+
+
+@pytest.fixture(scope="session")
+def ssh_key(slurm_cluster):
+    """
+    Generate SSH key for passwordless access to containers.
+
+    This fixture:
+    1. Generates an SSH key pair for testing
+    2. Copies the public key to the container's authorized_keys
+    3. Returns path to the private key
+    4. Cleans up the key after tests complete
+    """
+    ssh_dir = Path.home() / ".ssh"
+    ssh_dir.mkdir(exist_ok=True, mode=0o700)
+
+    key_path = ssh_dir / "slurm_test_key"
+
+    # Generate key if it doesn't exist
+    if not key_path.exists():
+        print("🔑 Generating SSH key for container access...")
+        subprocess.run(
+            [
+                "ssh-keygen",
+                "-t",
+                "rsa",
+                "-b",
+                "2048",
+                "-f",
+                str(key_path),
+                "-N",
+                "",  # No passphrase
+                "-C",
+                "slurm-test-key",
+            ],
+            check=True,
+        )
+
+    # Copy public key to container
+    pub_key = key_path.with_suffix(".pub").read_text()
+    subprocess.run(
+        [
+            "docker",
+            "exec",
+            slurm_cluster,
+            "bash",
+            "-c",
+            f'mkdir -p /root/.ssh && echo "{pub_key}" >> /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys',
+        ],
+        check=True,
+    )
+
+    print(f"✅ SSH key configured for container access")
+
+    yield key_path
+
+    # Cleanup
+    if key_path.exists():
+        key_path.unlink()
+        key_path.with_suffix(".pub").unlink()
+
+
+@pytest.fixture
+def library_env(ssh_key):
+    """
+    Provide environment configuration for slurm-executor library tests.
+
+    This fixture sets up the environment variables needed for the library
+    to connect to the test cluster via SSH.
+
+    Returns:
+        dict: Environment variables for library usage
+    """
+    return {
+        "SLURM_REMOTE": os.getenv("SLURM_REMOTE_SSH", "localhost"),
+        "SLURM_PORT": os.getenv("SLURM_PORT", "2222"),
+        "SLURM_USERNAME": os.getenv("SLURM_USERNAME", "root"),
+        "CPU_PARTITION": os.getenv("CPU_PARTITION", "normal"),
+        "SSH_KEY_PATH": str(ssh_key),
+    }
