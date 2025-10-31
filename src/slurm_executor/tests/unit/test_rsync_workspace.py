@@ -205,9 +205,7 @@ class TestRSyncWorkspace:
         result_ctx = step.run(base_context)
 
         # Assert
-        base_context._connection.run.assert_called_once_with(
-            "mkdir -p /remote/", pty=False
-        )
+        base_context._connection.run.assert_not_called()
         mock_compose_rsync.assert_called_once_with(
             port=2222,
             user="test-user",

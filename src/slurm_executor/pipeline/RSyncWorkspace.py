@@ -56,10 +56,14 @@ class RSyncWorkspace(Step):
         user = ctx.connection_config.user
         port = ctx.connection_config.port
 
-        conn.run(
-            f"mkdir -p {self.remote_root}",
-            pty=False,
-        )
+        if self.direction == "to_remote":
+            conn.run(
+                f"mkdir -p {self.remote_root}",
+                pty=False,
+            )
+
+        if self.direction == "from_remote":
+            return self._check_files_for_deletion(conn, host, user, port)
 
         conn.local(  # pyright: ignore[reportUnknownMemberType]
             compose_rsync_command(
@@ -78,3 +82,19 @@ class RSyncWorkspace(Step):
         ctx.remote_workspace_path = self.remote_root
 
         return ctx
+
+    def _check_files_for_deletion(self, conn, host, user, port):
+        return conn.local(  # pyright: ignore[reportUnknownMemberType]
+            compose_rsync_command(
+                port=port,
+                user=user,
+                host=host,
+                local_root=self.local_root,
+                remote_root=self.remote_root,
+                exclusion_file=self.exclude_from,
+                inclusion_file=self.include_only,
+                direction="from_remote",
+                dry_run=True,
+            ),
+            pty=False,
+        )

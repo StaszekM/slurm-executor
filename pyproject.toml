@@ -12,6 +12,7 @@ dependencies = [
     "colorama>=0.4.6",
     "fabric>=3.2.2",
     "gitpython>=3.1.45",
+    "jc>=1.25.6",
     "jinja2>=3.1.6",
     "pydantic>=2.12.2",
     "python-dotenv>=1.1.1",

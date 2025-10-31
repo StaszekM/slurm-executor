@@ -19,6 +19,7 @@ def compose_rsync_command(
     local_root: str,
     remote_root: str,
     direction: RsyncDirection,
+    dry_run: bool = False,
     exclusion_file: str | None = None,
     inclusion_file: str | None = None,
 ):
@@ -28,6 +29,7 @@ def compose_rsync_command(
         host=host,
         local_root=local_root,
         remote_root=remote_root,
+        dry_run=dry_run,
         exclusion_file=exclusion_file,
         inclusion_file=inclusion_file,
         direction=direction,
