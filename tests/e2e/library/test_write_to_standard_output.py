@@ -16,12 +16,6 @@ from pathlib import Path
 
 import pytest
 
-from slurm_executor.exceptions import FailedSbatchError
-
-# Add library to path for imports
-REPO_ROOT = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(REPO_ROOT / "src"))
-
 from slurm_executor import (
     ConnectionConfig,
     Pipeline,
@@ -31,6 +25,11 @@ from slurm_executor import (
     SubmitSbatchScript,
     WaitForJobCompletion,
 )
+from slurm_executor.exceptions import FailedSbatchError
+
+# Add library to path for imports
+REPO_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 
 class TestWriteToStandardOutputHappyPath:
