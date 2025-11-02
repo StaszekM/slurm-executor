@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from slurm_executor.exceptions import FailedSbatchError
+
 # Add library to path for imports
 REPO_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -40,17 +42,15 @@ class TestWriteToStandardOutputHappyPath:
     """
 
     @pytest.fixture
-    def pipeline(
-        self,
-        library_env,
-        test_workspace,
-        ssh_key,
-    ):
+    def pipeline(self, library_env, test_workspace, ssh_key, request):
+        correct = getattr(request, "param", True)  # default True
         remote_workspace = "/data/outputs/write_to_stdout_test/"
 
         exclusion_file = test_workspace / "exclude.txt"
 
-        sbatch_script_template_location = test_workspace / "sbatch_script.jinja"
+        sbatch_script_template_location = test_workspace / (
+            "sbatch_script.jinja" if correct else "sbatch_corrupted_script.jinja"
+        )
 
         # Configure pipeline with SSH key authentication
         ssh_key_path = ssh_key
@@ -127,6 +127,25 @@ class TestWriteToStandardOutputHappyPath:
         # read from stdout
         captured = capsys.readouterr()
         assert f"Writing to standard output: {test_message}" in captured.out
+
+    @pytest.mark.parametrize("pipeline", [False], indirect=True)
+    def test_throwing_error_when_failed(self, pipeline):
+        """
+        Test that error is raised when sbatch script has failed.
+        """
+
+        # Define the function to execute remotely
+        @pipeline.remote_run
+        def write_to_standard_output(text: str):
+            print(f"Writing to standard output: {text}")
+
+        # Execute the function
+        test_message = "Hello from E2E test!"
+        with pytest.raises(FailedSbatchError) as exc_info:
+            write_to_standard_output(test_message)
+
+        assert "Job" in str(exc_info.value)
+        assert "failed" in str(exc_info.value)
 
     def test_multiple_messages_to_stdout(self, capsys, pipeline):
         """
