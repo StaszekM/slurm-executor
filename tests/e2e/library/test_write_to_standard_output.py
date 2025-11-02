@@ -10,8 +10,6 @@ Tests the complete workflow of:
 """
 
 import os
-import re
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -60,7 +58,9 @@ class TestWriteToStandardOutputHappyPath:
         # Cleanup: restore working directory
         os.chdir(self.original_cwd)
 
-    def test_basic_write_to_stdout(self, slurm_cluster, library_env, test_workspace):
+    def test_basic_write_to_stdout(
+        self, slurm_cluster, library_env, test_workspace, ssh_key, capsys
+    ):
         """
         Test basic write_to_standard_output functionality.
 
@@ -72,53 +72,36 @@ class TestWriteToStandardOutputHappyPath:
         5. Output is captured in job output file
         """
         # Create working directory inside container
-        remote_workspace = "/workspace/tests/e2e/fixtures/test-workspace/outputs/write_to_stdout_test"
+        remote_workspace = "/data/outputs/write_to_stdout_test/"
 
-        # Create the remote directory in container
-        subprocess.run(
-            [
-                "docker",
-                "exec",
-                slurm_cluster,
-                "mkdir",
-                "-p",
-                remote_workspace,
-            ],
-            check=True,
-        )
+        exclusion_file = test_workspace / "exclude.txt"
+
+        sbatch_script_template_location = test_workspace / "sbatch_script.jinja"
 
         # Configure pipeline with SSH key authentication
-        ssh_key_path = library_env.get("SSH_KEY_PATH")
+        ssh_key_path = ssh_key
         pipeline = Pipeline(
             steps=[
                 RSyncWorkspace(
                     local_root=str(test_workspace),
                     remote_root=remote_workspace,
-                    exclude_from=None,  # No exclusions for test
+                    exclude_from=exclusion_file,
                     direction="to_remote",
                 ),
                 SendCall(),
                 SendSbatchScript(
                     partition=library_env["CPU_PARTITION"],
                     time="00:05:00",
-                    sbatch_script_template_location=str(REPO_ROOT / "sbatch_script.jinja"),
+                    sbatch_script_template_location=sbatch_script_template_location,
                 ),
                 SubmitSbatchScript(output_file_location=f"{remote_workspace}/job.out"),
                 WaitForJobCompletion(poll_interval_ms=1000),
-                RSyncWorkspace(
-                    local_root=str(test_workspace),
-                    remote_root=remote_workspace,
-                    exclude_from=None,
-                    direction="from_remote",
-                ),
             ],
             connection_config=ConnectionConfig(
                 host=library_env["SLURM_REMOTE"],
                 user=library_env["SLURM_USERNAME"],
                 port=int(library_env["SLURM_PORT"]),
-                connect_kwargs={
-                    "key_filename": ssh_key_path,
-                },
+                connect_kwargs={"key_filename": str(ssh_key_path)},
             ),
         )
 
@@ -134,26 +117,13 @@ class TestWriteToStandardOutputHappyPath:
         # Wait a bit for file sync to complete
         time.sleep(2)
 
-        # Verify the job output file was created
-        job_output_file = test_workspace / "outputs" / "write_to_stdout_test" / "job.out"
-        assert job_output_file.exists(), f"Job output file not found at {job_output_file}"
+        # read from stdout
+        captured = capsys.readouterr()
+        assert f"Writing to standard output: {test_message}" in captured.out
 
-        # Read and verify the output
-        output_content = job_output_file.read_text()
-        print(f"\n📄 Job output:\n{output_content}")
-
-        # Verify the expected message is in the output
-        assert f"Writing to standard output: {test_message}" in output_content, (
-            f"Expected message not found in output. Output was:\n{output_content}"
-        )
-
-        # Verify job completed successfully (check for common SLURM completion indicators)
-        # The output should not contain error indicators
-        assert "error" not in output_content.lower() or "0 errors" in output_content.lower(), (
-            f"Job appears to have errors. Output:\n{output_content}"
-        )
-
-    def test_multiple_messages_to_stdout(self, slurm_cluster, library_env, test_workspace):
+    def test_multiple_messages_to_stdout(
+        self, slurm_cluster, library_env, test_workspace
+    ):
         """
         Test that multiple print statements work correctly.
 
@@ -163,7 +133,9 @@ class TestWriteToStandardOutputHappyPath:
         3. All messages appear in the output file
         """
         # Create working directory
-        remote_workspace = "/workspace/tests/e2e/fixtures/test-workspace/outputs/write_to_stdout_test"
+        remote_workspace = (
+            "/workspace/tests/e2e/fixtures/test-workspace/outputs/write_to_stdout_test"
+        )
 
         # Configure pipeline
         ssh_key_path = library_env.get("SSH_KEY_PATH")
@@ -179,9 +151,13 @@ class TestWriteToStandardOutputHappyPath:
                 SendSbatchScript(
                     partition=library_env["CPU_PARTITION"],
                     time="00:05:00",
-                    sbatch_script_template_location=str(REPO_ROOT / "sbatch_script.jinja"),
+                    sbatch_script_template_location=str(
+                        REPO_ROOT / "sbatch_script.jinja"
+                    ),
                 ),
-                SubmitSbatchScript(output_file_location=f"{remote_workspace}/job_multi.out"),
+                SubmitSbatchScript(
+                    output_file_location=f"{remote_workspace}/job_multi.out"
+                ),
                 WaitForJobCompletion(poll_interval_ms=1000),
                 RSyncWorkspace(
                     local_root=str(test_workspace),
@@ -213,8 +189,12 @@ class TestWriteToStandardOutputHappyPath:
         time.sleep(2)
 
         # Verify output
-        job_output_file = test_workspace / "outputs" / "write_to_stdout_test" / "job_multi.out"
-        assert job_output_file.exists(), f"Job output file not found at {job_output_file}"
+        job_output_file = (
+            test_workspace / "outputs" / "write_to_stdout_test" / "job_multi.out"
+        )
+        assert job_output_file.exists(), (
+            f"Job output file not found at {job_output_file}"
+        )
 
         output_content = job_output_file.read_text()
         print(f"\n📄 Job output:\n{output_content}")

@@ -11,6 +11,7 @@ These tests validate that:
 import subprocess
 
 import pytest
+from fabric import Connection
 
 
 class TestSlurmClusterSmoke:
@@ -78,6 +79,7 @@ class TestSlurmClusterSmoke:
         )
         assert test_content in result.stdout
 
+    @pytest.mark.smoke
     def test_job_creates_output_file(self, slurm_cluster, test_workspace):
         """Test that SLURM jobs can create files in shared workspace."""
         # Submit job that creates a file
@@ -103,6 +105,10 @@ class TestSlurmClusterSmoke:
         content = output_file.read_text().strip()
         assert content == "Job output", f"Unexpected file content: {content}"
 
+        if output_file.exists():
+            output_file.unlink()  # Clean up after test
+
+    @pytest.mark.smoke
     def test_multiple_compute_nodes_available(self, slurm_cluster):
         """Test that multiple compute nodes are available."""
         # Check node information
@@ -124,6 +130,7 @@ class TestSlurmClusterSmoke:
         assert "c1" in result.stdout, "Node c1 not found"
         assert "c2" in result.stdout, "Node c2 not found"
 
+    @pytest.mark.smoke
     def test_job_accounting_database(self, slurm_cluster):
         """Test that job accounting database is working."""
         # Submit a simple job
@@ -155,3 +162,26 @@ class TestSlurmClusterSmoke:
         assert "COMPLETED" in sacct_result.stdout, (
             "No completed jobs found in accounting"
         )
+
+    @pytest.mark.smoke
+    def test_can_connect_with_ssh(self, library_env, ssh_key):
+        """Test that we can SSH into the SLURM controller node via Fabric"""
+
+        ssh_key_path = ssh_key
+
+        port = library_env.get("SLURM_PORT")
+        remote = library_env.get("SLURM_REMOTE")
+        user = library_env.get("SLURM_USERNAME")
+
+        with Connection(
+            host=remote,
+            user=user,
+            port=port,
+            connect_kwargs={"key_filename": str(ssh_key_path)},
+        ) as conn:
+            result = conn.local("echo Hi", pty=True)
+            result = conn.run("sinfo", pty=True)
+            assert result.ok, f"SSH command failed: {result.stderr}"
+            assert "normal" in result.stdout, (
+                "Expected 'normal' partition not found via SSH"
+            )
