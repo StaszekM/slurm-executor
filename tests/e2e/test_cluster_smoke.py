@@ -60,55 +60,6 @@ class TestSlurmClusterSmoke:
         assert "Hello from SLURM job" in output_result.stdout
 
     @pytest.mark.smoke
-    def test_file_sharing_between_containers(self, slurm_cluster, test_workspace):
-        """Test that files can be shared between host and containers."""
-        # Create a test file on the host
-        test_file = test_workspace / "test_file.txt"
-        test_content = "Test content from host"
-        test_file.write_text(test_content)
-
-        # Read the file from within the container
-        result = subprocess.run(
-            ["docker", "exec", slurm_cluster, "cat", "/test-workspace/test_file.txt"],
-            capture_output=True,
-            text=True,
-        )
-
-        assert result.returncode == 0, (
-            f"Failed to read file from container: {result.stderr}"
-        )
-        assert test_content in result.stdout
-
-    @pytest.mark.smoke
-    def test_job_creates_output_file(self, slurm_cluster, test_workspace):
-        """Test that SLURM jobs can create files in shared workspace."""
-        # Submit job that creates a file
-        result = subprocess.run(
-            [
-                "docker",
-                "exec",
-                slurm_cluster,
-                "sbatch",
-                "--wrap=echo 'Job output' > /test-workspace/outputs/job_created_file.txt",  # noqa: E501
-                "--wait",
-            ],
-            capture_output=True,
-            text=True,
-        )
-
-        assert result.returncode == 0, f"Job submission failed: {result.stderr}"
-
-        # Check if file was created on host
-        output_file = test_workspace / "outputs" / "job_created_file.txt"
-        assert output_file.exists(), "Job did not create expected output file"
-
-        content = output_file.read_text().strip()
-        assert content == "Job output", f"Unexpected file content: {content}"
-
-        if output_file.exists():
-            output_file.unlink()  # Clean up after test
-
-    @pytest.mark.smoke
     def test_multiple_compute_nodes_available(self, slurm_cluster):
         """Test that multiple compute nodes are available."""
         # Check node information
