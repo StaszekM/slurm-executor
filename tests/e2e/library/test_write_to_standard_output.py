@@ -122,7 +122,7 @@ class TestWriteToStandardOutputHappyPath:
         assert f"Writing to standard output: {test_message}" in captured.out
 
     def test_multiple_messages_to_stdout(
-        self, slurm_cluster, library_env, test_workspace
+        self, slurm_cluster, library_env, test_workspace, ssh_key, capsys
     ):
         """
         Test that multiple print statements work correctly.
@@ -132,47 +132,36 @@ class TestWriteToStandardOutputHappyPath:
         2. Output order is preserved
         3. All messages appear in the output file
         """
-        # Create working directory
-        remote_workspace = (
-            "/workspace/tests/e2e/fixtures/test-workspace/outputs/write_to_stdout_test"
-        )
+        remote_workspace = "/data/outputs/write_to_stdout_multiple_messages_test/"
 
-        # Configure pipeline
-        ssh_key_path = library_env.get("SSH_KEY_PATH")
+        exclusion_file = test_workspace / "exclude.txt"
+
+        sbatch_script_template_location = test_workspace / "sbatch_script.jinja"
+
+        # Configure pipeline with SSH key authentication
+        ssh_key_path = ssh_key
         pipeline = Pipeline(
             steps=[
                 RSyncWorkspace(
                     local_root=str(test_workspace),
                     remote_root=remote_workspace,
-                    exclude_from=None,
+                    exclude_from=exclusion_file,
                     direction="to_remote",
                 ),
                 SendCall(),
                 SendSbatchScript(
                     partition=library_env["CPU_PARTITION"],
                     time="00:05:00",
-                    sbatch_script_template_location=str(
-                        REPO_ROOT / "sbatch_script.jinja"
-                    ),
+                    sbatch_script_template_location=sbatch_script_template_location,
                 ),
-                SubmitSbatchScript(
-                    output_file_location=f"{remote_workspace}/job_multi.out"
-                ),
+                SubmitSbatchScript(output_file_location=f"{remote_workspace}/job.out"),
                 WaitForJobCompletion(poll_interval_ms=1000),
-                RSyncWorkspace(
-                    local_root=str(test_workspace),
-                    remote_root=remote_workspace,
-                    exclude_from=None,
-                    direction="from_remote",
-                ),
             ],
             connection_config=ConnectionConfig(
                 host=library_env["SLURM_REMOTE"],
                 user=library_env["SLURM_USERNAME"],
                 port=int(library_env["SLURM_PORT"]),
-                connect_kwargs={
-                    "key_filename": ssh_key_path,
-                },
+                connect_kwargs={"key_filename": str(ssh_key_path)},
             ),
         )
 
@@ -188,25 +177,15 @@ class TestWriteToStandardOutputHappyPath:
         # Wait for sync
         time.sleep(2)
 
-        # Verify output
-        job_output_file = (
-            test_workspace / "outputs" / "write_to_stdout_test" / "job_multi.out"
-        )
-        assert job_output_file.exists(), (
-            f"Job output file not found at {job_output_file}"
-        )
-
-        output_content = job_output_file.read_text()
-        print(f"\n📄 Job output:\n{output_content}")
-
-        # Check all messages are present
-        assert "Message 1: Start" in output_content
-        assert "Message 2: Middle" in output_content
-        assert "Message 3: End" in output_content
+        # read stdout
+        captured = capsys.readouterr()
+        assert "Message 1: Start" in captured.out
+        assert "Message 2: Middle" in captured.out
+        assert "Message 3: End" in captured.out
 
         # Check order is preserved
-        start_pos = output_content.find("Message 1: Start")
-        middle_pos = output_content.find("Message 2: Middle")
-        end_pos = output_content.find("Message 3: End")
+        start_pos = captured.out.find("Message 1: Start")
+        middle_pos = captured.out.find("Message 2: Middle")
+        end_pos = captured.out.find("Message 3: End")
 
         assert start_pos < middle_pos < end_pos, "Messages not in expected order"

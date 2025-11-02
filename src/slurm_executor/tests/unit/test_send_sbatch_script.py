@@ -9,9 +9,7 @@ import pytest
 
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
 from slurm_executor.models.Context import Context
-from slurm_executor.pipeline.SendSbatchScript import (
-    SendSbatchScript,
-)
+from slurm_executor.pipeline.SendSbatchScript import SendSbatchScript
 from slurm_executor.utils.both_present import both_present
 
 
@@ -173,6 +171,7 @@ class TestSendSbatchScript:
                 remote_root="/remote/workspace/job.sh",
                 exclusion_file=None,
                 direction="to_remote",
+                identity_file_path=None,
             )
 
             # Verify rsync execution
@@ -295,12 +294,14 @@ class TestSendSbatchScript:
 
     @patch("slurm_executor.pipeline.SendSbatchScript.compose_rsync_command")
     @patch("slurm_executor.pipeline.SendSbatchScript.tempfile.TemporaryDirectory")
+    @pytest.mark.parametrize("identity_file_path", [None, "/path/to/identity_file"])
     def test_run_uses_connection_config_values(
         self,
         mock_tempdir,
         mock_compose_rsync,
         base_context,
         sbatch_script_location,
+        identity_file_path,
     ):
         """Test that run method uses values from connection config correctly."""
         # Arrange
@@ -314,6 +315,9 @@ class TestSendSbatchScript:
         base_context.connection_config.host = "custom-host.example.com"
         base_context.connection_config.user = "custom-user"
         base_context.connection_config.port = 9999
+        base_context.connection_config.connect_kwargs["key_filename"] = (
+            identity_file_path
+        )
 
         mock_tempdir_instance = MagicMock()
         mock_tempdir_instance.__enter__.return_value = "/tmp/custom_dir"
@@ -335,6 +339,7 @@ class TestSendSbatchScript:
                 remote_root="/remote/workspace/job.sh",
                 exclusion_file=None,
                 direction="to_remote",
+                identity_file_path=identity_file_path,
             )
 
     @pytest.mark.parametrize(
