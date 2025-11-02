@@ -45,6 +45,8 @@ class WaitForJobCompletion(Step):
         output_file_detected = False
         output_file = get_job_stdout_path(conn, job_id)
 
+        identity_file_path = ctx.connection_config.connect_kwargs.get("key_filename")
+
         stats: Dict[str, Any] = {}
 
         while True:
@@ -64,6 +66,7 @@ class WaitForJobCompletion(Step):
                             output_file,
                             stop_event,
                             stats,
+                            identity_file_path,
                         ),
                         daemon=True,
                     )

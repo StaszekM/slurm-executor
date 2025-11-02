@@ -239,6 +239,24 @@ class TestComposeRsyncCommand:
         assert "--exclude-from=" not in result
         assert "--files-from=" not in result
 
+    def test_compose_rsync_command_provide_identity_file(self):
+        """Test rsync command when identity file is provided."""
+        # Act
+        result = compose_rsync_command(
+            port=22,
+            user="user",
+            host="example.com",
+            local_root="/local/",
+            remote_root="/remote/",
+            direction="to_remote",
+            exclusion_file="exclude.txt",
+            inclusion_file="include.txt",
+            identity_file_path="/path/to/identity_file",
+        )
+
+        # Assert
+        assert "-i /path/to/identity_file" in result
+
     @pytest.mark.parametrize(
         "exclusion_file,inclusion_file",
         [

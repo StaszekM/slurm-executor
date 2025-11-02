@@ -130,6 +130,10 @@ class SendSbatchScript(Step):
                 append_path_slash_if_missing(workspace_location) + job_script_name
             )
 
+            identity_file_path = ctx.connection_config.connect_kwargs.get(
+                "key_filename"
+            )
+
             conn.local(  # pyright: ignore[reportUnknownMemberType]
                 compose_rsync_command(
                     port=ctx.connection_config.port,
@@ -139,6 +143,7 @@ class SendSbatchScript(Step):
                     remote_root=remote_sbatch_location,
                     exclusion_file=None,
                     direction="to_remote",
+                    identity_file_path=identity_file_path,
                 ),
                 pty=False,
             )

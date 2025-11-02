@@ -6,10 +6,10 @@ import cloudpickle
 from slurm_executor.models.Context import Context
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.models.Step import Step
-from slurm_executor.utils.compose_rsync_command import compose_rsync_command
 from slurm_executor.utils.append_path_slash_if_missing import (
     append_path_slash_if_missing,
 )
+from slurm_executor.utils.compose_rsync_command import compose_rsync_command
 
 
 class SendCall(Step):
@@ -47,6 +47,10 @@ class SendCall(Step):
                 cloudpickle.dump(call_data, f)  # pyright: ignore[reportUnknownMemberType]
                 conn = ctx._connection
 
+            identity_file_path = ctx.connection_config.connect_kwargs.get(
+                "key_filename"
+            )
+
             remote_call_location = (
                 append_path_slash_if_missing(remote_workspace)
                 + serialized_call_filename
@@ -60,6 +64,7 @@ class SendCall(Step):
                     local_root=str(call_file),
                     remote_root=remote_call_location,
                     direction="to_remote",
+                    identity_file_path=identity_file_path,
                 ),
                 pty=False,
             )

@@ -13,10 +13,13 @@ def tail_remote_file(
     remote_path: str,
     stop_event: threading.Event,
     stats: Dict[str, Any],
+    identity_file_path: str | None = None,
 ):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname=host, username=user, port=port)
+    ssh.connect(
+        hostname=host, username=user, port=port, key_filename=identity_file_path
+    )
 
     # -n +1 means start from beginning; adjust if needed
     cmd = f"tail -n +1 -f {remote_path}"
