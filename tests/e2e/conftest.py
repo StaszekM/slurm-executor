@@ -56,7 +56,7 @@ def slurm_cluster():
 
         # Wait for containers to be ready
         print("⏳ Waiting for SLURM services to start...")
-        time.sleep(30)
+        time.sleep(10)
 
         # Check if containers are running
         result = subprocess.run(
@@ -171,9 +171,13 @@ def slurm_env():
         dict: Environment variables needed for SLURM connection
     """
     return {
-        "SLURM_REMOTE": safe_get_env("SLURM_REMOTE", "Container hostname for SLURM cluster"),
+        "SLURM_REMOTE": safe_get_env(
+            "SLURM_REMOTE", "Container hostname for SLURM cluster"
+        ),
         "SLURM_PORT": safe_get_env("SLURM_PORT", "SSH port for SLURM connection"),
-        "SLURM_USERNAME": safe_get_env("SLURM_USERNAME", "Username for SLURM connection"),
+        "SLURM_USERNAME": safe_get_env(
+            "SLURM_USERNAME", "Username for SLURM connection"
+        ),
         "CPU_PARTITION": safe_get_env("CPU_PARTITION", "SLURM partition name"),
     }
 
@@ -221,6 +225,7 @@ def ssh_key(slurm_cluster):
         subprocess.run(
             [
                 "ssh-keygen",
+                "-q",
                 "-t",
                 "rsa",
                 "-b",
@@ -249,7 +254,7 @@ def ssh_key(slurm_cluster):
         check=True,
     )
 
-    print(f"✅ SSH key configured for container access")
+    print("✅ SSH key configured for container access")
 
     yield key_path
 
@@ -271,9 +276,13 @@ def library_env(ssh_key):
         dict: Environment variables for library usage
     """
     return {
-        "SLURM_REMOTE": safe_get_env("SLURM_REMOTE_SSH", "SSH hostname for SLURM cluster (localhost for tests)"),
+        "SLURM_REMOTE": safe_get_env(
+            "SLURM_REMOTE_SSH", "SSH hostname for SLURM cluster (localhost for tests)"
+        ),
         "SLURM_PORT": safe_get_env("SLURM_PORT", "SSH port for SLURM connection"),
-        "SLURM_USERNAME": safe_get_env("SLURM_USERNAME", "Username for SLURM SSH connection"),
+        "SLURM_USERNAME": safe_get_env(
+            "SLURM_USERNAME", "Username for SLURM SSH connection"
+        ),
         "CPU_PARTITION": safe_get_env("CPU_PARTITION", "SLURM partition name"),
         "SSH_KEY_PATH": str(ssh_key),
     }
