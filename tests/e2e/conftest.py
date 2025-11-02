@@ -162,7 +162,17 @@ def test_workspace():
         workspace_path / ".python-version",
     )
 
-    return workspace_path
+    yield workspace_path
+
+    # Cleanup
+    if (workspace_path / "src").exists():
+        shutil.rmtree(workspace_path / "src")
+
+    if (workspace_path / "pyproject.toml").exists():
+        (workspace_path / "pyproject.toml").unlink()
+
+    if (workspace_path / ".python-version").exists():
+        (workspace_path / ".python-version").unlink()
 
 
 @pytest.fixture
@@ -289,7 +299,7 @@ def ssh_key(slurm_cluster, library_env):
             f"{remote_host}:{remote_port}: {exc}"
         )
 
-    print(f"✅ SSH key configured for container access, path: {key_path}")
+    print("✅ SSH key configured for container access")
     yield key_path
 
     # Cleanup
@@ -310,6 +320,7 @@ def ssh_key(slurm_cluster, library_env):
                     f"[{remote_host}]:{remote_port}",
                 ],
                 check=False,
+                stdout=subprocess.DEVNULL,
             )
     except Exception:
         pass

@@ -130,8 +130,8 @@ class TestSlurmClusterSmoke:
             port=port,
             connect_kwargs={"key_filename": str(ssh_key_path)},
         ) as conn:
-            result = conn.local("echo Hi", pty=True)
-            result = conn.run("sinfo", pty=True)
+            result = conn.local("echo Hi", pty=True, hide=True)
+            result = conn.run("sinfo", pty=True, hide=True)
             assert result.ok, f"SSH command failed: {result.stderr}"
             assert "normal" in result.stdout, (
                 "Expected 'normal' partition not found via SSH"

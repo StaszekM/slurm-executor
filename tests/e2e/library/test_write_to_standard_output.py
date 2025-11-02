@@ -39,39 +39,13 @@ class TestWriteToStandardOutputHappyPath:
     when everything is configured correctly.
     """
 
-    @pytest.fixture(autouse=True)
-    def setup_environment(self, library_env, test_workspace):
-        """Set up environment for each test."""
-        # Set environment variables for the library
-        for key, value in library_env.items():
-            os.environ[key] = str(value)
-
-        # Store original working directory
-        self.original_cwd = Path.cwd()
-
-        # Create a test-specific workspace directory
-        self.test_dir = test_workspace / "outputs" / "write_to_stdout_test"
-        self.test_dir.mkdir(parents=True, exist_ok=True)
-
-        yield
-
-        # Cleanup: restore working directory
-        os.chdir(self.original_cwd)
-
-    def test_basic_write_to_stdout(
-        self, slurm_cluster, library_env, test_workspace, ssh_key, capsys
+    @pytest.fixture
+    def pipeline(
+        self,
+        library_env,
+        test_workspace,
+        ssh_key,
     ):
-        """
-        Test basic write_to_standard_output functionality.
-
-        This is the happy path test that verifies:
-        1. Library can connect to cluster
-        2. Code is synced to remote
-        3. Job is submitted successfully
-        4. Function executes and writes to stdout
-        5. Output is captured in job output file
-        """
-        # Create working directory inside container
         remote_workspace = "/data/outputs/write_to_stdout_test/"
 
         exclusion_file = test_workspace / "exclude.txt"
@@ -105,6 +79,39 @@ class TestWriteToStandardOutputHappyPath:
             ),
         )
 
+        return pipeline
+
+    @pytest.fixture(autouse=True)
+    def setup_environment(self, library_env, test_workspace):
+        """Set up environment for each test."""
+        # Set environment variables for the library
+        for key, value in library_env.items():
+            os.environ[key] = str(value)
+
+        # Store original working directory
+        self.original_cwd = Path.cwd()
+
+        # Create a test-specific workspace directory
+        self.test_dir = test_workspace / "outputs" / "write_to_stdout_test"
+        self.test_dir.mkdir(parents=True, exist_ok=True)
+
+        yield
+
+        # Cleanup: restore working directory
+        os.chdir(self.original_cwd)
+
+    def test_basic_write_to_stdout(self, capsys, pipeline):
+        """
+        Test basic write_to_standard_output functionality.
+
+        This is the happy path test that verifies:
+        1. Library can connect to cluster
+        2. Code is synced to remote
+        3. Job is submitted successfully
+        4. Function executes and writes to stdout
+        5. Output is captured in job output file
+        """
+
         # Define the function to execute remotely
         @pipeline.remote_run
         def write_to_standard_output(text: str):
@@ -121,9 +128,7 @@ class TestWriteToStandardOutputHappyPath:
         captured = capsys.readouterr()
         assert f"Writing to standard output: {test_message}" in captured.out
 
-    def test_multiple_messages_to_stdout(
-        self, slurm_cluster, library_env, test_workspace, ssh_key, capsys
-    ):
+    def test_multiple_messages_to_stdout(self, capsys, pipeline):
         """
         Test that multiple print statements work correctly.
 
@@ -132,38 +137,6 @@ class TestWriteToStandardOutputHappyPath:
         2. Output order is preserved
         3. All messages appear in the output file
         """
-        remote_workspace = "/data/outputs/write_to_stdout_multiple_messages_test/"
-
-        exclusion_file = test_workspace / "exclude.txt"
-
-        sbatch_script_template_location = test_workspace / "sbatch_script.jinja"
-
-        # Configure pipeline with SSH key authentication
-        ssh_key_path = ssh_key
-        pipeline = Pipeline(
-            steps=[
-                RSyncWorkspace(
-                    local_root=str(test_workspace),
-                    remote_root=remote_workspace,
-                    exclude_from=exclusion_file,
-                    direction="to_remote",
-                ),
-                SendCall(),
-                SendSbatchScript(
-                    partition=library_env["CPU_PARTITION"],
-                    time="00:05:00",
-                    sbatch_script_template_location=sbatch_script_template_location,
-                ),
-                SubmitSbatchScript(output_file_location=f"{remote_workspace}/job.out"),
-                WaitForJobCompletion(poll_interval_ms=1000),
-            ],
-            connection_config=ConnectionConfig(
-                host=library_env["SLURM_REMOTE"],
-                user=library_env["SLURM_USERNAME"],
-                port=int(library_env["SLURM_PORT"]),
-                connect_kwargs={"key_filename": str(ssh_key_path)},
-            ),
-        )
 
         @pipeline.remote_run
         def write_multiple_messages():
