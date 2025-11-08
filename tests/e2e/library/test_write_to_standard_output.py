@@ -32,7 +32,7 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 
-class TestWriteToStandardOutputHappyPath:
+class TestWriteToStandardOutput:
     """
     Happy path tests for write_to_standard_output example.
 
@@ -108,7 +108,6 @@ class TestWriteToStandardOutputHappyPath:
         2. Code is synced to remote
         3. Job is submitted successfully
         4. Function executes and writes to stdout
-        5. Output is captured in job output file
         """
 
         # Define the function to execute remotely
@@ -153,7 +152,6 @@ class TestWriteToStandardOutputHappyPath:
         Verifies that:
         1. Multiple print statements are captured
         2. Output order is preserved
-        3. All messages appear in the output file
         """
 
         @pipeline.remote_run
