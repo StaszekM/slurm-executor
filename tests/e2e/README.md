@@ -2,51 +2,78 @@
 
 This directory contains end-to-end tests for the SLURM Executor library using a containerized SLURM cluster.
 
+## 🚀 Quick Start
+
+See [QUICK_START.md](QUICK_START.md) for immediate usage instructions.
+
+```bash
+cd tests/e2e
+make build  # First time only
+make test   # Run all tests
+```
+
+## 📚 Documentation
+
+- **[QUICK_START.md](QUICK_START.md)** - Get started immediately
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed setup and troubleshooting
+- **[TEST_STRUCTURE.md](TEST_STRUCTURE.md)** - Architecture and extensibility
+- **[library/README.md](library/README.md)** - Library integration tests
+- **[WEEK1_SUMMARY.md](WEEK1_SUMMARY.md)** - Initial implementation summary
+
 ## Overview
 
 The E2E tests validate the complete workflow of:
 1. Deploying a SLURM cluster using Docker containers
-2. Submitting jobs through the slurm-executor library
+2. Submitting jobs through the slurm-executor library via SSH
 3. Verifying file synchronization and job execution
 4. Testing error scenarios and edge cases
+
+### Test Types
+
+1. **Smoke Tests** (`test_cluster_smoke.py`)
+   - Basic SLURM functionality validation
+   - Quick cluster health checks
+   - Run with: `make test-smoke`
+
+2. **Library Integration Tests** (`library/`)
+   - Full slurm-executor library workflows
+   - Tests actual examples (write_to_standard_output, etc.)
+   - Run with: `make test-library`
 
 ## Architecture
 
 The test environment uses:
 - **giovtorres/slurm-docker-cluster** (fork) as the base SLURM setup
 - **Docker Compose** for orchestrating multiple containers
+- **SSH access** for library connections (port 2222)
 - **pytest** for test execution and fixtures
 - **Shared volumes** for file exchange between host and containers
 
 ### Containers
 
-| Container | Purpose | Hostname |
-|-----------|---------|----------|
-| mysql-test | Database for SLURM accounting | mysql |
-| slurmdbd-test | SLURM database daemon | slurmdbd |
-| slurmctld-test | SLURM controller | slurmctld |
-| c1-test | Compute node 1 | c1 |
-| c2-test | Compute node 2 | c2 |
+| Container | Purpose | SSH | Hostname |
+|-----------|---------|-----|----------|
+| mysql-test | Database for SLURM accounting | No | mysql |
+| slurmdbd-test | SLURM database daemon | No | slurmdbd |
+| slurmctld-test | SLURM controller | **Yes (2222)** | slurmctld |
+| c1-test | Compute node 1 | No | c1 |
+| c2-test | Compute node 2 | No | c2 |
 
-## Quick Start
+**Note**: Only slurmctld has SSH enabled for library access.
 
-### Prerequisites
-
-- Docker and Docker Compose installed
-- Python 3.9+ with pytest
-- `uv` package manager (for running examples)
+## Quick Commands
 
 ### Running Tests
 
 ```bash
-# Navigate to E2E directory
-cd tests/e2e
-
-# Run all tests (includes building containers)
+# All tests
 make test
 
-# Run only smoke tests (faster)
+# Smoke tests only (fast)
 make test-smoke
+
+# Library tests only
+make test-library
 
 # Build containers without testing
 make build

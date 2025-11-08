@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --partition={{partition}}
+#SBATCH --time={{time}}
+
+set -e
+cd {{workspace_location}}
+
+if ! command -v uv >/dev/null 2>&1; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source $HOME/.local/bin/env
+fi
+uv add pynacl
+uv sync --no-binary --no-dev
+
+echo "Running"
+
+
+cat > ./job_script.py <<'PY'
+from slurm_executor.executor.CloudpickleExecutor import CloudpickleExecutor
+executor = CloudpickleExecutor(deserialize_from="{{remote_call_location}}")
+executor.run()
+PY
+
+uv run python ./job_script.py
+
+echo "Finished"

@@ -56,6 +56,8 @@ class RSyncWorkspace(Step):
         user = ctx.connection_config.user
         port = ctx.connection_config.port
 
+        identity_file_path = ctx.connection_config.connect_kwargs.get("key_filename")
+
         conn.run(
             f"mkdir -p {self.remote_root}",
             pty=False,
@@ -71,6 +73,7 @@ class RSyncWorkspace(Step):
                 exclusion_file=self.exclude_from,
                 inclusion_file=self.include_only,
                 direction=self.direction,
+                identity_file_path=identity_file_path,
             ),
             pty=False,
         )

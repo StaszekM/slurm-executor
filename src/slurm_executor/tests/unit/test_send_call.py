@@ -1,11 +1,12 @@
 """Unit tests for SendCall step."""
 
-import pytest
-from unittest.mock import Mock, patch, mock_open, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
 
-from slurm_executor.models.Context import Context
+import pytest
+
 from slurm_executor.models.ConnectionConfig import ConnectionConfig
+from slurm_executor.models.Context import Context
 from slurm_executor.models.SerializableCallData import SerializableCallData
 from slurm_executor.pipeline.SendCall import SendCall
 
@@ -103,6 +104,7 @@ class TestSendCall:
                 local_root=str(Path("/tmp/test_dir/call.pkl")),
                 remote_root="/remote/workspace/call.pkl",
                 direction="to_remote",
+                identity_file_path=None,
             )
 
             # Verify rsync execution
@@ -174,8 +176,14 @@ class TestSendCall:
     @patch("slurm_executor.pipeline.SendCall.compose_rsync_command")
     @patch("slurm_executor.pipeline.SendCall.cloudpickle")
     @patch("slurm_executor.pipeline.SendCall.tempfile.TemporaryDirectory")
+    @pytest.mark.parametrize("identity_file_path", [None, "/path/to/identity_file"])
     def test_run_uses_connection_config_values(
-        self, mock_tempdir, mock_cloudpickle, mock_compose_rsync, base_context
+        self,
+        mock_tempdir,
+        mock_cloudpickle,
+        mock_compose_rsync,
+        base_context,
+        identity_file_path,
     ):
         """Test that run method uses values from connection config correctly."""
         # Arrange
@@ -185,6 +193,9 @@ class TestSendCall:
         base_context.connection_config.host = "custom-host.example.com"
         base_context.connection_config.user = "custom-user"
         base_context.connection_config.port = 9999
+        base_context.connection_config.connect_kwargs["key_filename"] = (
+            identity_file_path
+        )
 
         mock_tempdir_instance = MagicMock()
         mock_tempdir_instance.__enter__.return_value = "/tmp/custom_dir"
@@ -205,6 +216,7 @@ class TestSendCall:
                 local_root=str(Path("/tmp/custom_dir/call.pkl")),
                 remote_root="/remote/workspace/call.pkl",
                 direction="to_remote",
+                identity_file_path=identity_file_path,
             )
 
     @pytest.mark.parametrize(

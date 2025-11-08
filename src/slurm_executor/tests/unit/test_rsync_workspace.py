@@ -179,6 +179,7 @@ class TestRSyncWorkspace:
             exclusion_file="exclude.txt",
             inclusion_file=None,
             direction="to_remote",
+            identity_file_path=None,
         )
         base_context._connection.local.assert_called_once_with(
             expected_rsync_cmd, pty=False
@@ -217,6 +218,7 @@ class TestRSyncWorkspace:
             exclusion_file=None,
             inclusion_file="include.txt",
             direction="from_remote",
+            identity_file_path=None,
         )
         base_context._connection.local.assert_called_once_with(
             expected_rsync_cmd, pty=False
@@ -290,7 +292,8 @@ class TestRSyncWorkspace:
         assert result_ctx.remote_workspace_path == "/some/remote/path/"
         assert result_ctx is base_context  # Should return the same context object
 
-    def test_run_uses_connection_config_values(self, base_context):
+    @pytest.mark.parametrize("identity_file_path", [None, "/path/to/identity_file"])
+    def test_run_uses_connection_config_values(self, base_context, identity_file_path):
         """Test that run method uses values from connection config correctly."""
         # Arrange
         step = RSyncWorkspace(
@@ -304,6 +307,9 @@ class TestRSyncWorkspace:
         base_context.connection_config.host = "custom-host.example.com"
         base_context.connection_config.user = "custom-user"
         base_context.connection_config.port = 9999
+        base_context.connection_config.connect_kwargs["key_filename"] = (
+            identity_file_path
+        )
 
         mock_module = "slurm_executor.pipeline.RSyncWorkspace.compose_rsync_command"
         with patch(mock_module) as mock_compose_rsync:
@@ -322,6 +328,7 @@ class TestRSyncWorkspace:
                 exclusion_file="exclude.txt",
                 inclusion_file=None,
                 direction="to_remote",
+                identity_file_path=identity_file_path,
             )
 
     @pytest.mark.parametrize(

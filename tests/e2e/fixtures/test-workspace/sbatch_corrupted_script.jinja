@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH --partition={{partition}}
+#SBATCH --time={{time}}
+
+set -e
+cd {{workspace_location}}
+
+sleep 5
+
+python - <<'EOF'
+
+raise SyntaxError("This is a corrupted script")
+print('{{remote_call_location}}')
+EOF
+
+echo "Finished"

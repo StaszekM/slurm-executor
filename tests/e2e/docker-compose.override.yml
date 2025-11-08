@@ -1,0 +1,14 @@
+services:
+  c1:
+    container_name: c1-test
+  c2:
+    container_name: c2-test
+
+  mysql:
+    container_name: mysql-test
+
+  slurmdbd:
+    container_name: slurmdbd-test
+
+  slurmctld:
+    container_name: slurmctld-test

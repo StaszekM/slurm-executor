@@ -3,6 +3,7 @@ import threading
 import time
 from typing import Any, Dict
 
+from slurm_executor.exceptions import FailedSbatchError
 from slurm_executor.models.Context import Context
 from slurm_executor.models.Step import Step
 from slurm_executor.slurm_cli.get_job_state import get_job_state
@@ -45,6 +46,8 @@ class WaitForJobCompletion(Step):
         output_file_detected = False
         output_file = get_job_stdout_path(conn, job_id)
 
+        identity_file_path = ctx.connection_config.connect_kwargs.get("key_filename")
+
         stats: Dict[str, Any] = {}
 
         while True:
@@ -64,6 +67,7 @@ class WaitForJobCompletion(Step):
                             output_file,
                             stop_event,
                             stats,
+                            identity_file_path,
                         ),
                         daemon=True,
                     )
@@ -85,7 +89,7 @@ class WaitForJobCompletion(Step):
                     conn.run(f"cat {output_file}")
 
                 if state != "COMPLETED":
-                    raise Exception(f"Job {job_id} failed with state {state}.")
+                    raise FailedSbatchError(f"Job {job_id} failed with state {state}.")
                 break
             prev_state = state
             time.sleep(self.poll_interval_ms / 1000.0)

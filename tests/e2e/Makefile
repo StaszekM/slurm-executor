@@ -1,12 +1,15 @@
 # E2E Testing Makefile for SLURM Docker Cluster
-.PHONY: help build test test-smoke clean logs shell collect-logs
+.PHONY: help build up down test test-smoke test-library clean logs shell collect-logs
 
 # Default target
 help:
 	@echo "Available targets:"
 	@echo "  build        - Build SLURM Docker images"
+	@echo "  up           - Start SLURM Docker cluster"
+	@echo "  down         - Stop SLURM Docker cluster"
 	@echo "  test         - Run all E2E tests" 
 	@echo "  test-smoke   - Run smoke tests only"
+	@echo "  test-library - Run library integration tests only"
 	@echo "  clean        - Clean up containers and volumes"
 	@echo "  logs         - Show container logs"
 	@echo "  collect-logs - Collect container logs to files"
@@ -16,27 +19,39 @@ help:
 # Build SLURM Docker images
 build:
 	@echo "🏗️  Building SLURM Docker images..."
-	docker compose -f docker-compose.test.yml --env-file .env.test build
+	docker compose --project-directory ../vendor/slurm-docker-cluster -f ../vendor/slurm-docker-cluster/docker-compose.yml -f docker-compose.override.yml --env-file .env.test build
+
+up: build
+	@echo "Running SLURM Docker cluster..."
+	docker compose --project-directory ../vendor/slurm-docker-cluster -f ../vendor/slurm-docker-cluster/docker-compose.yml -f docker-compose.override.yml --env-file .env.test up -d
+
+status:
+	@echo "🔍 Checking SLURM Docker cluster status..."
+	docker compose --project-directory ../vendor/slurm-docker-cluster -f ../vendor/slurm-docker-cluster/docker-compose.yml -f docker-compose.override.yml --env-file .env.test ps --services --filter "status=running"
 
 # Run all E2E tests
 test: build
 	@echo "🧪 Running E2E tests..."
-	uv run python -m pytest -v
+	python3 -m pytest -v
 
 # Run smoke tests only
 test-smoke:
 	@echo "💨 Running smoke tests..."
-	uv run python -m pytest -v -m smoke
+	python3 -m pytest -v -m smoke
+
+# Run library integration tests only
+test-library:
+	@echo "📚 Running library integration tests..."
+	python3 -m pytest library/ -v
 
 # Clean up containers and volumes
 clean:
 	@echo "🧹 Cleaning up containers and volumes..."
-	docker compose -f docker-compose.test.yml --env-file .env.test down -v --remove-orphans || true
-	docker system prune -f || true
+	docker compose --project-directory ../vendor/slurm-docker-cluster -f ../vendor/slurm-docker-cluster/docker-compose.yml -f docker-compose.override.yml --env-file .env.test down -v --remove-orphans || true
 
 # Show container logs
 logs:
-	docker compose -f docker-compose.test.yml --env-file .env.test logs -f
+	docker compose --project-directory ../vendor/slurm-docker-cluster -f ../vendor/slurm-docker-cluster/docker-compose.yml -f docker-compose.override.yml --env-file .env.test logs -f
 
 # Collect container logs to files
 collect-logs:
@@ -55,3 +70,7 @@ collect-logs:
 # Open shell in slurmctld container
 shell:
 	docker exec -it slurmctld-test bash
+
+register-cluster:
+	@echo "📝 Registering SLURM cluster with SlurmDBD..."
+	./register_cluster.sh

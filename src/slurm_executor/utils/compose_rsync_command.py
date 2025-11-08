@@ -21,6 +21,7 @@ def compose_rsync_command(
     direction: RsyncDirection,
     exclusion_file: str | None = None,
     inclusion_file: str | None = None,
+    identity_file_path: str | None = None,
 ):
     command = RSYNC_TEMPLATE.render(
         port=port,
@@ -31,5 +32,6 @@ def compose_rsync_command(
         exclusion_file=exclusion_file,
         inclusion_file=inclusion_file,
         direction=direction,
+        identity_file_path=identity_file_path,
     )
     return command

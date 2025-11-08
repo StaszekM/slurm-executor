@@ -11,6 +11,7 @@ These tests validate that:
 import subprocess
 
 import pytest
+from fabric import Connection
 
 
 class TestSlurmClusterSmoke:
@@ -59,50 +60,6 @@ class TestSlurmClusterSmoke:
         assert "Hello from SLURM job" in output_result.stdout
 
     @pytest.mark.smoke
-    def test_file_sharing_between_containers(self, slurm_cluster, test_workspace):
-        """Test that files can be shared between host and containers."""
-        # Create a test file on the host
-        test_file = test_workspace / "test_file.txt"
-        test_content = "Test content from host"
-        test_file.write_text(test_content)
-
-        # Read the file from within the container
-        result = subprocess.run(
-            ["docker", "exec", slurm_cluster, "cat", "/test-workspace/test_file.txt"],
-            capture_output=True,
-            text=True,
-        )
-
-        assert result.returncode == 0, (
-            f"Failed to read file from container: {result.stderr}"
-        )
-        assert test_content in result.stdout
-
-    def test_job_creates_output_file(self, slurm_cluster, test_workspace):
-        """Test that SLURM jobs can create files in shared workspace."""
-        # Submit job that creates a file
-        result = subprocess.run(
-            [
-                "docker",
-                "exec",
-                slurm_cluster,
-                "sbatch",
-                "--wrap=echo 'Job output' > /test-workspace/outputs/job_created_file.txt",  # noqa: E501
-                "--wait",
-            ],
-            capture_output=True,
-            text=True,
-        )
-
-        assert result.returncode == 0, f"Job submission failed: {result.stderr}"
-
-        # Check if file was created on host
-        output_file = test_workspace / "outputs" / "job_created_file.txt"
-        assert output_file.exists(), "Job did not create expected output file"
-
-        content = output_file.read_text().strip()
-        assert content == "Job output", f"Unexpected file content: {content}"
-
     def test_multiple_compute_nodes_available(self, slurm_cluster):
         """Test that multiple compute nodes are available."""
         # Check node information
@@ -124,6 +81,7 @@ class TestSlurmClusterSmoke:
         assert "c1" in result.stdout, "Node c1 not found"
         assert "c2" in result.stdout, "Node c2 not found"
 
+    @pytest.mark.smoke
     def test_job_accounting_database(self, slurm_cluster):
         """Test that job accounting database is working."""
         # Submit a simple job
@@ -155,3 +113,26 @@ class TestSlurmClusterSmoke:
         assert "COMPLETED" in sacct_result.stdout, (
             "No completed jobs found in accounting"
         )
+
+    @pytest.mark.smoke
+    def test_can_connect_with_ssh(self, library_env, ssh_key):
+        """Test that we can SSH into the SLURM controller node via Fabric"""
+
+        ssh_key_path = ssh_key
+
+        port = library_env.get("SLURM_PORT")
+        remote = library_env.get("SLURM_REMOTE")
+        user = library_env.get("SLURM_USERNAME")
+
+        with Connection(
+            host=remote,
+            user=user,
+            port=port,
+            connect_kwargs={"key_filename": str(ssh_key_path)},
+        ) as conn:
+            result = conn.local("echo Hi", pty=True, hide=True)
+            result = conn.run("sinfo", pty=True, hide=True)
+            assert result.ok, f"SSH command failed: {result.stderr}"
+            assert "normal" in result.stdout, (
+                "Expected 'normal' partition not found via SSH"
+            )
